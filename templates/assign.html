@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Assign Asset</h2>
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="row">
+          <div class="col-md-4 mb-2">
+            <label for="assetTypeSelect" class="form-label">Asset Type</label>
+            <select id="assetTypeSelect" class="form-select">
+              <option value="">All</option>
+              <option value="Laptop">Laptop</option>
+              <option value="Mouse">Mouse</option>
+              <option value="Keyboard">Keyboard</option>
+              <option value="System">System</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-2">{{ form.asset_id.label(class="form-label") }}{{ form.asset_id(class="form-select") }}</div>
+          <div class="col-md-4 mb-2">{{ form.user_id.label(class="form-label") }}{{ form.user_id(class="form-select") }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-2 mb-2 d-flex align-items-end">{{ form.submit(class="btn btn-primary w-100") }}</div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <h4>Assignment History</h4>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Asset</th>
+        <th>User</th>
+        <th>Assigned At</th>
+        <th>Returned At</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in assignments %}
+      <tr>
+        <td>{{ a.id }}</td>
+        <td>{{ a.serial_number }} ({{ a.brand }} {{ a.model }})</td>
+        <td>{{ a.name }} ({{ a.email }})</td>
+        <td>{{ a.assigned_at }}</td>
+        <td>{{ a.returned_at or '-' }}</td>
+        <td>
+          {% if not a.returned_at %}
+          <form method="POST" action="/assign/return/{{ a.id }}" style="display:inline-block" onsubmit="return confirm('Mark as returned?');">
+            <button type="submit" class="btn btn-sm btn-success">Return</button>
+          </form>
+          {% else %}-{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center">No assignments found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+// Asset type filter for asset dropdown
+const assetTypeSelect = document.getElementById('assetTypeSelect');
+const assetDropdown = document.getElementById('asset_id');
+if (assetTypeSelect && assetDropdown) {
+  // Store original options
+  const allOptions = Array.from(assetDropdown.options);
+  assetTypeSelect.addEventListener('change', function() {
+    const type = this.value;
+    assetDropdown.innerHTML = '';
+    allOptions.forEach(opt => {
+      if (!type || opt.text.includes('(' + type) || opt.text.includes('(' + type + ' ')) {
+        assetDropdown.appendChild(opt.cloneNode(true));
+      }
+    });
+  });
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> VT Asset Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #f8f9fa; }
+    .sidebar {
+      min-height: 100vh;
+      background: #1c4b79;
+      color: #fff;
+      padding-top: 2rem;
+    }
+    .sidebar a {
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .sidebar a.active, .sidebar a:hover {
+      background: #0a3d71;
+    }
+    .sidebar-link {
+      transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+    }
+    .sidebar-link:hover {
+      transform: scale(1.08);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+      z-index: 2;
+      background-color: #0a3d71 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      {% if current_user.is_authenticated and current_user.role == 'admin' %}
+      <nav class="col-md-2 sidebar">
+        <h4 class="text-center mb-4">VT Asset Management System</h4>
+        <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+        <a href="/assets" class="sidebar-link {% if request.path.startswith('/assets') %}active{% endif %}"><i class="bi bi-box-seam me-2"></i>Asset Master</a>
+        <a href="/assign" class="sidebar-link {% if request.path.startswith('/assign') %}active{% endif %}"><i class="bi bi-arrow-left-right me-2"></i>Assign Asset</a>
+        <a href="/upload" class="sidebar-link {% if request.path.startswith('/upload') %}active{% endif %}"><i class="bi bi-upload me-2"></i>Upload GRN/PO/Invoice</a>
+        <a href="/requests" class="sidebar-link {% if request.path.startswith('/requests') %}active{% endif %}"><i class="bi bi-list-check me-2"></i>Requests</a>
+        <a href="/maintenance" class="sidebar-link {% if request.path.startswith('/maintenance') %}active{% endif %}"><i class="bi bi-tools me-2"></i>Maintenance</a>
+        <a href="/users" class="sidebar-link {% if request.path.startswith('/users') %}active{% endif %}"><i class="bi bi-people me-2"></i>User Management</a>
+        <a href="/reports" class="sidebar-link {% if request.path.startswith('/reports') %}active{% endif %}"><i class="bi bi-bar-chart me-2"></i>Reports</a>
+        <a href="/audit" class="sidebar-link {% if request.path.startswith('/audit') %}active{% endif %}"><i class="bi bi-clipboard-data me-2"></i>Audit Logs</a>
+        <a href="/notifications" class="sidebar-link {% if request.path.startswith('/notifications') %}active{% endif %}"><i class="bi bi-bell me-2"></i>Notifications</a>
+        <a href="/logout" class="sidebar-link"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+      </nav>
+      {% elif current_user.is_authenticated and current_user.role == 'user' %}
+      <nav class="col-md-2 sidebar">
+        <h4 class="text-center mb-4">Asset Management System</h4>
+        <a href="/user-requests" class="{% if request.path.startswith('/user-requests') %}active{% endif %}">My Requests</a>
+        <a href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+      </nav>
+      {% endif %}
+      <main class="{% if current_user.is_authenticated %}col-md-10 ms-sm-auto px-4{% else %}col-md-12{% endif %}">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

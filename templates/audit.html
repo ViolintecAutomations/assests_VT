@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Audit Logs</h2>
+<div class="table-responsive mt-4">
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>User Name</th>
+        <th>Email</th>
+        <th>Action</th>
+        <th>Details</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.name }}</td>
+        <td>{{ log.email }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.details }}</td>
+        <td>{{ log.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %} 

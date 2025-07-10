@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Notifications</h2>
+<div class="mt-4">
+  {% if notifications %}
+    <ul class="list-group">
+      {% for note in notifications %}
+        <li class="list-group-item">{{ note }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-success">No notifications at this time.</div>
+  {% endif %}
+</div>
+{% endblock %} 

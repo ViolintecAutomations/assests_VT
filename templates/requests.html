@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>All Asset Requests</h2>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Asset Type</th>
+            <th>Request Type</th>
+            <th>Status</th>
+            <th>Details</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for req in requests %}
+        <tr>
+            <td>{{ req.id }}</td>
+            <td>{{ req.name }}</td>
+            <td>{{ req.email }}</td>
+            <td>{{ req.asset_type }}</td>
+            <td>{{ req.request_type }}</td>
+            <td>{{ req.status }}</td>
+            <td>{{ req.details }}</td>
+            <td>{{ req.created_at }}</td>
+            <td>
+                <form method="POST" style="display:inline-block">
+                    <input type="hidden" name="request_id" value="{{ req.id }}">
+                    {% if req.status == 'pending' %}
+                        <button name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                        <button name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
+                    {% endif %}
+                    {% if req.status == 'approved' %}
+                        <button name="action" value="complete" class="btn btn-primary btn-sm">Complete</button>
+                    {% endif %}
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="text-center">No requests found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %} 

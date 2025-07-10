@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Maintenance & Repairs</h2>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Asset</th>
+            <th>Issue Details</th>
+            <th>Status</th>
+            <th>Reported At</th>
+            <th>Resolved At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in maintenance %}
+        <tr>
+            <td>{{ m.id }}</td>
+            <td>{{ m.serial_number }} ({{ m.brand }} {{ m.model }})</td>
+            <td>{{ m.issue_details }}</td>
+            <td>{{ m.status }}</td>
+            <td>{{ m.reported_at }}</td>
+            <td>{{ m.resolved_at or '-' }}</td>
+            <td>
+                <form method="POST" style="display:inline-block">
+                    <input type="hidden" name="maint_id" value="{{ m.id }}">
+                    <select name="status" class="form-select form-select-sm d-inline w-auto">
+                        <option value="open" {% if m.status == 'open' %}selected{% endif %}>Open</option>
+                        <option value="in_progress" {% if m.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="resolved" {% if m.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center">No maintenance records found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %} 

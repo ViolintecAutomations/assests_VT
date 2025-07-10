@@ -1,0 +1,6 @@
+flask
+flask-mysqldb
+flask-login
+flask-wtf
+flask-bootstrap
+mysqlclient 

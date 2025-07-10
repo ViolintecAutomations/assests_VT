@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>My Asset Requests</h2>
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="POST" action="/user-requests">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.asset_type.label(class="form-label") }}
+          {{ form.asset_type(class="form-control") }}
+        </div>
+        <div class="mb-3">
+          {{ form.request_type.label(class="form-label") }}
+          {{ form.request_type(class="form-select") }}
+        </div>
+        <div class="mb-3">
+          {{ form.details.label(class="form-label") }}
+          {{ form.details(class="form-control") }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+      </form>
+    </div>
+  </div>
+  <h4>Request History</h4>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Asset Type</th>
+        <th>Request Type</th>
+        <th>Status</th>
+        <th>Details</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for req in requests %}
+      <tr>
+        <td>{{ req.id }}</td>
+        <td>{{ req.asset_type }}</td>
+        <td>{{ req.request_type }}</td>
+        <td>{{ req.status }}</td>
+        <td>{{ req.details }}</td>
+        <td>{{ req.created_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center">No requests found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %} 

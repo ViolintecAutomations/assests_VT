@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Edit Asset</h2>
+  <div class="card">
+    <div class="card-body">
+      <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="row">
+          <div class="col-md-2 mb-2">{{ form.serial_number.label(class="form-label") }}{{ form.serial_number(class="form-control") }}</div>
+          <div class="col-md-2 mb-2">{{ form.brand.label(class="form-label") }}{{ form.brand(class="form-control") }}</div>
+          <div class="col-md-2 mb-2">{{ form.model.label(class="form-label") }}{{ form.model(class="form-control") }}</div>
+          <div class="col-md-2 mb-2">{{ form.purchase_date.label(class="form-label") }}{{ form.purchase_date(class="form-control") }}</div>
+          <div class="col-md-2 mb-2">{{ form.warranty_expiry.label(class="form-label") }}{{ form.warranty_expiry(class="form-control") }}</div>
+          <div class="col-md-2 mb-2 d-flex align-items-end">{{ form.submit(class="btn btn-primary w-100") }}</div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="w-100 d-flex justify-content-center mb-4 mt-3">
+  <h2 class="text-center">Asset Management Dashboard</h2>
+</div>
+
+<div class="container-fluid">
+  <!-- Total Assets Section -->
+  <div class="row mb-2">
+    <div class="col-12">
+      <h4 class="text-center mb-1 text-muted">Total Assets</h4>
+    </div>
+  </div>
+  <div class="row justify-content-center mb-2">
+    <div class="dashboard-row">
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-total-laptop text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-laptop" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Laptops</h5>
+            <h2 id="total-laptop-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-total-mouse text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-mouse" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Mouses</h5>
+            <h2 id="total-mouse-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-total-keyboard text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-keyboard" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Keyboards</h5>
+            <h2 id="total-keyboard-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-total-system text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-pc-display" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Systems</h5>
+            <h2 id="total-system-count">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Available Assets Section -->
+  <div class="row mb-2">
+    <div class="col-12">
+      <h4 class="text-center mb-1 text-muted">Available Assets</h4>
+    </div>
+  </div>
+  <div class="row justify-content-center mb-2">
+    <div class="dashboard-row">
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-available-laptop text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-laptop" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Laptops</h5>
+            <h2 id="available-laptop-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-available-mouse text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-mouse" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Mouses</h5>
+            <h2 id="available-mouse-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-available-keyboard text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-keyboard" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Keyboards</h5>
+            <h2 id="available-keyboard-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-available-system text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-pc-display" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Systems</h5>
+            <h2 id="available-system-count">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assigned Assets Section -->
+  <div class="row mb-2">
+    <div class="col-12">
+      <h4 class="text-center mb-1 text-muted">Assigned Assets</h4>
+    </div>
+  </div>
+  <div class="row justify-content-center mb-2">
+    <div class="dashboard-row">
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-assigned-laptop text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-laptop" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Laptops</h5>
+            <h2 id="assigned-laptop-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-assigned-mouse text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-mouse" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Mouses</h5>
+            <h2 id="assigned-mouse-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-assigned-keyboard text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-keyboard" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Keyboards</h5>
+            <h2 id="assigned-keyboard-count">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-gradient-assigned-system text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="mb-2"><i class="bi bi-pc-display" style="font-size: 2rem;"></i></div>
+            <h5 class="card-title">Systems</h5>
+            <h2 id="assigned-system-count">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gradient CSS for each tile -->
+<style>
+  body, .dashboard-card, .card-title, .dashboard-card h2 {
+    font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif !important;
+  }
+  .dashboard-card {
+    border-radius: 1rem;
+    transition: transform 0.2s;
+    min-height: 85px;
+    max-height: 120px;
+    min-width: 120px;
+    max-width: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0.2rem;
+    padding: 0.1rem 0.1rem;
+  }
+  .dashboard-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 12px rgba(0,0,0,0.10);
+  }
+  .dashboard-card h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0;
+    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dashboard-card .card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.1rem;
+  }
+  .dashboard-card i {
+    font-size: 1.2rem;
+    margin-bottom: 0.1rem;
+  }
+  .dashboard-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .dashboard-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 0.3rem;
+    margin-top: 0.3rem;
+  }
+  /* Gradient backgrounds for each tile */
+  .bg-gradient-total-laptop { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+  .bg-gradient-total-mouse { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+  .bg-gradient-total-keyboard { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+  .bg-gradient-total-system { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+  .bg-gradient-available-laptop { background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%); }
+  .bg-gradient-available-mouse { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%); }
+  .bg-gradient-available-keyboard { background: linear-gradient(135deg, #c471f5 0%, #fa71cd 100%); }
+  .bg-gradient-available-system { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+  .bg-gradient-assigned-laptop { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+  .bg-gradient-assigned-mouse { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+  .bg-gradient-assigned-keyboard { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); }
+  .bg-gradient-assigned-system { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%); }
+  @media (max-width: 1200px) {
+    .dashboard-card {
+      min-width: 100px;
+      max-width: 140px;
+      min-height: 65px;
+      max-height: 100px;
+    }
+    .dashboard-card h2 {
+      font-size: 0.9rem;
+    }
+    .dashboard-card .card-title {
+      font-size: 0.8rem;
+    }
+    .dashboard-card i {
+      font-size: 1rem;
+    }
+  }
+  @media (max-width: 768px) {
+    .dashboard-row {
+      gap: 0.2rem;
+    }
+    .dashboard-card {
+      min-width: 80px;
+      max-width: 110px;
+      min-height: 55px;
+      max-height: 80px;
+      padding: 0.05rem 0.05rem;
+    }
+    .dashboard-card h2 {
+      font-size: 0.8rem;
+    }
+    .dashboard-card .card-title {
+      font-size: 0.7rem;
+    }
+    .dashboard-card i {
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+<script>
+function updateDashboardTiles() {
+  fetch('/api/available_assets').then(r => r.json()).then(available => {
+    fetch('/api/assigned_assets').then(r => r.json()).then(assigned => {
+      // Asset types
+      const types = ['laptop', 'mouse', 'keyboard', 'system'];
+      types.forEach(type => {
+        const availableCount = available[type] || 0;
+        const assignedCount = assigned[type] || 0;
+        // Set available and assigned
+        document.getElementById(`available-${type}-count`).textContent = availableCount;
+        document.getElementById(`assigned-${type}-count`).textContent = assignedCount;
+        // Set total as sum of available + assigned
+        document.getElementById(`total-${type}-count`).textContent = availableCount + assignedCount;
+      });
+    });
+  });
+}
+updateDashboardTiles();
+setInterval(updateDashboardTiles, 2000);
+</script>
+{% endblock %} 

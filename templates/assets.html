@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  <h2>Asset Master</h2>
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="row">
+          <div class="col-md-2 mb-2">
+            {{ form.serial_number.label(class="form-label") }}
+            {{ form.serial_number(class="form-control") }}
+            {% for error in form.serial_number.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-2 mb-2">
+            {{ form.brand.label(class="form-label") }}
+            {{ form.brand(class="form-control") }}
+            {% for error in form.brand.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-2 mb-2">
+            {{ form.model.label(class="form-label") }}
+            {{ form.model(class="form-control") }}
+            {% for error in form.model.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-2 mb-2">
+            {{ form.purchase_date.label(class="form-label") }}
+            {{ form.purchase_date(class="form-control") }}
+            {% for error in form.purchase_date.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-2 mb-2">
+            {{ form.warranty_expiry.label(class="form-label") }}
+            {{ form.warranty_expiry(class="form-control") }}
+            {% for error in form.warranty_expiry.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-2 mb-2">
+            {{ form.asset_type.label(class="form-label") }}
+            {{ form.asset_type(class="form-control") }}
+            {% for error in form.asset_type.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-2 mb-2 d-flex align-items-end">{{ form.submit(class="btn btn-primary w-100") }}</div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <h4>Asset List</h4>
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label for="assetSearch" class="form-label">Search Assets</label>
+      <input type="text" id="assetSearch" class="form-control" placeholder="Search by serial number, brand, model, type, status...">
+    </div>
+    <div class="col-md-3">
+      <label for="assetTypeFilter" class="form-label">Filter by Asset Type</label>
+      <select id="assetTypeFilter" class="form-select">
+        <option value="">All</option>
+        <option value="Laptop">Laptop</option>
+        <option value="Mouse">Mouse</option>
+        <option value="Keyboard">Keyboard</option>
+        <option value="System">System</option>
+        <option value="Others">Others</option>
+      </select>
+    </div>
+  </div>
+  <table class="table table-bordered table-striped" id="assetTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Serial Number</th>
+        <th>Brand</th>
+        <th>Model</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Purchase Date</th>
+        <th>Warranty Expiry</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for asset in assets %}
+      <tr>
+        <td>{{ asset.id }}</td>
+        <td>{{ asset.serial_number }}</td>
+        <td>{{ asset.brand }}</td>
+        <td>{{ asset.model }}</td>
+        <td class="asset-type" data-asset-type="{{ asset.asset_type }}">{{ asset.asset_type }}</td>
+        <td>{{ asset.status }}</td>
+        <td>{{ asset.purchase_date }}</td>
+        <td>{{ asset.warranty_expiry }}</td>
+        <td>
+          <a href="/assets/edit/{{ asset.id }}" class="btn btn-sm btn-warning">Edit</a>
+          <form method="POST" action="/assets/delete/{{ asset.id }}" style="display:inline-block" onsubmit="return confirm('Delete this asset?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="text-center">No assets found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+  function filterAssets() {
+    var searchTerm = document.getElementById('assetSearch').value.toLowerCase();
+    var typeFilter = document.getElementById('assetTypeFilter').value.toLowerCase();
+    var rows = document.querySelectorAll('#assetTable tbody tr');
+    
+    rows.forEach(function(row) {
+      var showRow = true;
+      
+      // Get all text content from the row
+      var rowText = row.textContent.toLowerCase();
+      var typeCell = row.querySelector('td[data-asset-type]');
+      var assetType = typeCell ? typeCell.getAttribute('data-asset-type').toLowerCase() : '';
+      
+      // Apply search filter
+      if (searchTerm && !rowText.includes(searchTerm)) {
+        showRow = false;
+      }
+      
+      // Apply type filter
+      if (typeFilter && assetType !== typeFilter) {
+        showRow = false;
+      }
+      
+      // Show/hide row
+      row.style.display = showRow ? '' : 'none';
+    });
+  }
+  
+  // Add event listeners
+  document.getElementById('assetSearch').addEventListener('input', filterAssets);
+  document.getElementById('assetTypeFilter').addEventListener('change', filterAssets);
+</script>
+{% endblock %} 
