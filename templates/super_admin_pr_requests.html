@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}All PR Requests - Super Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-file-alt"></i> All Purchase Requests
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">All PRs ({{ all_prs|length }})</h6>
+                    <a href="/super-admin-dashboard" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if all_prs %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>PR Number</th>
+                                    <th>Requester</th>
+                                    <th>Department</th>
+                                    <th>From</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pr in all_prs %}
+                                <tr>
+                                    <td>
+                                        <a href="/super-admin/pr-details/{{ pr.id }}" class="text-primary font-weight-bold">
+                                            {{ pr.pr_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ pr.requester_name }}</td>
+                                    <td>{{ pr.department_name or 'N/A' }}</td>
+                                    <td>{{ pr.from_field or 'N/A' }}</td>
+                                    <td>{{ pr.justification[:50] + '...' if pr.justification and pr.justification|length > 50 else pr.justification or 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ 'warning' if pr.status == 'pending' else 'success' if pr.status == 'approved' else 'secondary' }}">
+                                            {{ pr.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ pr.created_at.strftime('%Y-%m-%d %H:%M') if pr.created_at else 'N/A' }}</td>
+                                    <td>
+                                        <a href="/super-admin/pr-details/{{ pr.id }}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {% if pr.status == 'pending' %}
+                                        <a href="/super-admin/approve-pr/{{ pr.id }}" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check"></i> Approve
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No purchase requests found.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,601 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.status-updated {
+  animation: highlight 2s ease-in-out;
+}
+@keyframes highlight {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: #d4edda; }
+}
+
+/* Highlight for newly created PRs */
+.highlight-new-pr {
+  animation: newPrHighlight 3s ease-in-out;
+  border-left: 4px solid #28a745 !important;
+}
+
+@keyframes newPrHighlight {
+  0% { background-color: #d4edda; transform: scale(1.02); }
+  50% { background-color: #c3e6cb; transform: scale(1.01); }
+  100% { background-color: transparent; transform: scale(1); }
+}
+
+/* Success message animation */
+.alert-success {
+  border-left: 4px solid #28a745;
+}
+
+.alert-success.show {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Improved table design */
+.table-responsive {
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0,123,255,0.05);
+  transform: scale(1.01);
+  transition: all 0.2s ease;
+}
+
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Compact table design */
+.compact-table th,
+.compact-table td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+/* Status badges */
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+}
+
+/* Info badges */
+.info-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 8px;
+}
+
+/* Responsive text */
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card improvements */
+.card {
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border-radius: 12px;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Header improvements */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Button improvements */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Tab improvements */
+.nav-tabs {
+  border-bottom: 2px solid #e9ecef;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  border-radius: 8px 8px 0 0;
+  font-weight: 500;
+  color: #6c757d;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .compact-table th,
+  .compact-table td {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .btn-group-sm .btn {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+  }
+  
+  .page-header {
+    padding: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+/* PR Number Link Styling */
+.pr-number-link {
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.pr-number-link:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  transform: translateX(2px);
+  text-decoration: none !important;
+}
+
+.pr-number-link:hover .bi-arrow-right-circle {
+  transform: translateX(2px);
+  transition: transform 0.3s ease;
+}
+</style>
+
+<div class="container-fluid mt-4">
+  <!-- Improved Header -->
+  <div class="page-header">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="bi bi-clipboard-check text-white" style="font-size: 2rem;"></i>
+          </div>
+          <div>
+            <h2 class="mb-1 text-white">Procurement Approvals</h2>
+            <div class="d-flex align-items-center">
+              <span class="badge bg-info me-2">
+                <i class="bi bi-sort-down"></i> Latest First
+              </span>
+              <small class="text-white opacity-75" id="last-updated">
+                <i class="bi bi-clock"></i> Last updated: Never
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex justify-content-end align-items-center gap-2">
+          <a href="/procurement/create-pr" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> New PR
+          </a>
+          <button class="btn btn-outline-warning" onclick="forceRefresh()" title="Force Refresh">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+          <button class="btn btn-outline-info" onclick="debugApprovals()" title="Debug">
+            <i class="bi bi-bug"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <ul class="nav nav-tabs mb-3" id="approvalStatusTabs">
+    <li class="nav-item">
+      <a class="nav-link active" href="#" onclick="setApprovalFilter('all', event)" id="tab-all">All</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="setApprovalFilter('pending', event)" id="tab-pending">Pending</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="setApprovalFilter('approved', event)" id="tab-approved">Approved</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="setApprovalFilter('rejected', event)" id="tab-rejected">Rejected</a>
+    </li>
+  </ul>
+
+  <!-- Success message for newly created PRs -->
+  <div id="success-message" class="alert alert-success alert-dismissible fade" style="display: none;">
+    <i class="bi bi-check-circle"></i>
+    <span id="success-text"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+
+  <!-- Improved Table -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover compact-table mb-0" id="approvals-table">
+          <thead class="table-dark">
+            <tr>
+              <th style="min-width: 180px;">PR Number</th>
+              <th style="min-width: 100px;">Requester</th>
+              <th style="min-width: 80px;">Asset Type</th>
+              <th style="min-width: 120px;">Configuration</th>
+              <th style="min-width: 100px;">Amount</th>
+              <th style="min-width: 80px;">Status</th>
+              <th style="min-width: 100px;">Approver</th>
+              <th style="min-width: 120px;">Date</th>
+              <th style="min-width: 100px;">PO Number</th>
+              <th style="min-width: 100px;">PO Date</th>
+              <th style="min-width: 100px;">Vendor</th>
+              <th style="min-width: 120px;">Expected Delivery</th>
+              <th style="min-width: 100px;">PO File</th>
+              <th style="min-width: 80px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="approvals-body">
+            <!-- Rows will be loaded by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let approvalStatusFilter = 'all';
+
+function setApprovalFilter(status, event) {
+  approvalStatusFilter = status;
+  // Update tab highlight
+  document.querySelectorAll('#approvalStatusTabs .nav-link').forEach(tab => tab.classList.remove('active'));
+  document.getElementById('tab-' + status).classList.add('active');
+  loadApprovals();
+  if (event) event.preventDefault();
+}
+
+function loadApprovals() {
+  // Show loading indicator
+  const tbody = document.getElementById('approvals-body');
+  if (tbody.children.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="14" class="text-center"><i class="bi bi-arrow-clockwise spin"></i> Loading...</td></tr>';
+  }
+  
+  let url = '/api/approval_list';
+  let isApprovedItems = false;
+  
+  if (approvalStatusFilter === 'approved') {
+    url = '/api/approved_items';
+    isApprovedItems = true;
+  } else if (approvalStatusFilter !== 'all') {
+    url += '?status=' + approvalStatusFilter;
+  }
+  console.log('Loading approvals with filter:', approvalStatusFilter, url); // Debug log
+  
+  fetch(url)
+    .then(response => {
+      console.log('Response status:', response.status); // Debug log
+      return response.json();
+    })
+    .then(data => {
+      console.log('Received approval data:', data); // Debug log
+      
+      const tbody = document.getElementById('approvals-body');
+      tbody.innerHTML = '';
+      
+      let items = [];
+      if (isApprovedItems && data.success && data.approved_items) {
+        items = data.approved_items;
+        console.log(`Processing ${items.length} approved items`); // Debug log
+      } else if (data.success && data.approvals) {
+        items = data.approvals;
+        console.log(`Processing ${items.length} approvals`); // Debug log
+      }
+      
+      if (items.length > 0) {
+        items.forEach((row, index) => {
+          console.log(`Processing Item ${index + 1}:`, row); // Debug log
+          
+          const approverValue = row.approver_name || row.approver_email || 'Pending';
+          const approverCell = `<span class="text-truncate-2">${approverValue}</span>`;
+          
+          // Status with color coding
+          const status = isApprovedItems ? (row.item_status || 'approved') : (row.status || 'pending');
+          let statusClass = 'badge bg-secondary status-badge';
+          if (status === 'approved') statusClass = 'badge bg-success status-badge';
+          else if (status === 'rejected') statusClass = 'badge bg-danger status-badge';
+          else if (status === 'pending') statusClass = 'badge bg-warning status-badge';
+          
+          const statusCell = `<span class="${statusClass}">${status.toUpperCase()}</span>`;
+          
+          // Format approval date
+          let approvalDate = '';
+          if (row.approval_date) {
+            try {
+              const date = new Date(row.approval_date);
+              approvalDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } catch (e) {
+              approvalDate = 'Invalid Date';
+            }
+          } else {
+            approvalDate = '<span class="text-warning">Pending</span>';
+          }
+          
+          const approvalDateCell = `<span class="text-muted small">${approvalDate}</span>`;
+          
+          // Format amount with better styling
+          const amount = isApprovedItems ? (row.total_amount || '0') : (row.total_amount || '0');
+          const amountCell = `<span class="fw-bold text-success">₹${amount}</span>`;
+          
+          // Format configuration with truncation
+          const config = isApprovedItems ? (row.configuration || 'N/A') : (row.configurations || 'N/A');
+          const configCell = `<span class="text-truncate-2" title="${config}">${config}</span>`;
+          
+          // Format asset types
+          const assetTypes = isApprovedItems ? (row.asset_type_name || 'N/A') : (row.asset_types || 'N/A');
+          const assetTypesCell = `<span class="badge bg-info info-badge">${assetTypes}</span>`;
+          
+          // Format PO data
+          const poNumber = row.po_numbers || 'N/A';
+          const poDate = row.po_dates || 'N/A';
+          const vendorName = row.vendor_names || 'N/A';
+          const expectedDelivery = row.expected_delivery_dates || 'N/A';
+          const poFilePath = row.po_file_paths || 'N/A';
+          
+          // Format PO date if available
+          let formattedPoDate = 'N/A';
+          if (poDate && poDate !== 'N/A') {
+            try {
+              const date = new Date(poDate);
+              formattedPoDate = date.toLocaleDateString();
+            } catch (e) {
+              formattedPoDate = poDate;
+            }
+          }
+          
+          // Format expected delivery date if available
+          let formattedExpectedDelivery = 'N/A';
+          if (expectedDelivery && expectedDelivery !== 'N/A') {
+            try {
+              const date = new Date(expectedDelivery);
+              formattedExpectedDelivery = date.toLocaleDateString();
+            } catch (e) {
+              formattedExpectedDelivery = expectedDelivery;
+            }
+          }
+          
+          // Create PO file link if available
+          let poFileCell = 'N/A';
+          if (poFilePath && poFilePath !== 'N/A') {
+            poFileCell = `<a href="${poFilePath}" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-file-earmark"></i> View
+            </a>`;
+          }
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <a href="/pr_details/${row.pr_id}" class="text-primary fw-bold text-decoration-none pr-number-link" 
+                 title="Click to view PR details">
+                ${row.pr_number || ''}
+              </a>
+            </td>
+            <td><span class="text-truncate-2" title="${row.requester_name || ''}">${row.requester_name || ''}</span></td>
+            <td>${assetTypesCell}</td>
+            <td>${configCell}</td>
+            <td>${amountCell}</td>
+            <td>${statusCell}</td>
+            <td>${approverCell}</td>
+            <td>${approvalDateCell}</td>
+            <td><span class="badge bg-secondary">${poNumber}</span></td>
+            <td><span class="text-muted small">${formattedPoDate}</span></td>
+            <td><span class="text-truncate-2" title="${vendorName}">${vendorName}</span></td>
+            <td><span class="text-muted small">${formattedExpectedDelivery}</span></td>
+            <td>${poFileCell}</td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-success" onclick="testApproval(${row.approval_id}, 'approved')" title="Approve">
+                  <i class="bi bi-check-circle"></i>
+                </button>
+                <button class="btn btn-outline-danger" onclick="testApproval(${row.approval_id}, 'rejected')" title="Reject">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          
+          // Remove blue styling from first 3 rows - no special styling needed
+          // if (index < 3) {
+          //   tr.classList.add('table-primary');
+          //   tr.style.borderLeft = '4px solid #007bff';
+          // }
+          
+          tbody.appendChild(tr);
+        });
+      } else {
+        console.log('No approvals found or error in response'); // Debug log
+        tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted">No approvals found.</td></tr>';
+      }
+      
+      // Update timestamp
+      const now = new Date();
+      document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+    })
+    .catch(error => {
+      console.error('Error loading approvals:', error); // Debug log
+      const tbody = document.getElementById('approvals-body');
+      tbody.innerHTML = '<tr><td colspan="14" class="text-center text-danger"><i class="bi bi-exclamation-triangle"></i> Error loading data. Please try again.</td></tr>';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadApprovals();
+});
+
+// Refresh when page becomes visible (user returns to tab)
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    loadApprovals();
+  }
+});
+
+// Refresh when window gains focus
+window.addEventListener('focus', loadApprovals);
+
+// Function to show success message
+function showSuccessMessage(message) {
+  const successDiv = document.getElementById('success-message');
+  const successText = document.getElementById('success-text');
+  
+  successText.textContent = message;
+  successDiv.style.display = 'block';
+  successDiv.classList.add('show');
+  
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    successDiv.classList.remove('show');
+    setTimeout(() => {
+      successDiv.style.display = 'none';
+    }, 300);
+  }, 5000);
+}
+
+// Debug function to check status
+function debugStatus(pr_id) {
+  fetch(`/api/purchase_requests/${pr_id}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        console.log('PR Details:', data);
+        alert(`PR Status: ${data.approval_status || 'No approval status'}\nPR Data: ${JSON.stringify(data.purchase_request, null, 2)}`);
+      } else {
+        alert('Error fetching PR details');
+      }
+    });
+}
+
+// Test function to approve/reject PRs
+function testApproval(pr_id, status) {
+  const notes = prompt(`Enter notes for ${status}:`);
+  if (notes === null) return; // User cancelled
+  
+  const data = {
+    status: status,
+    notes: notes,
+    approver: 'Test Approver'
+  };
+  
+  console.log(`Testing approval for PR ${pr_id} with status: ${status}`);
+  
+  fetch(`/api/purchase_requests/${pr_id}/approve`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    console.log('Approval result:', result);
+    if (result.success) {
+      alert(`PR ${status} successfully!`);
+      loadApprovals(); // Refresh the table
+    } else {
+      alert(`Error: ${result.error}`);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error processing approval');
+  });
+}
+
+// Debug function to check approval status
+function debugApprovals() {
+  fetch('/api/debug/approvals')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        console.log('Debug approval data:', data);
+        alert(`Debug Info:\nTotal PRs: ${data.total_prs}\nPRs with approvals: ${data.prs_with_approvals}\nPRs without approvals: ${data.prs_without_approvals}\n\nCheck console for detailed data.`);
+      } else {
+        alert('Error fetching debug data: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error fetching debug data');
+    });
+}
+
+// Function to fix missing approval records
+function fixMissingApprovals() {
+  if (!confirm('This will create missing approval records for PRs that don\'t have them. Continue?')) {
+    return;
+  }
+  
+  fetch('/api/fix/missing-approvals', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`Success: ${data.message}`);
+      loadApprovals(); // Refresh the table
+    } else {
+      alert('Error: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error fixing missing approvals');
+    });
+}
+
+// Force refresh function
+function forceRefresh() {
+  location.reload();
+}
+</script>
+{% endblock %} 

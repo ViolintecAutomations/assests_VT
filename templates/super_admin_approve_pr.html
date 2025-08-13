@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Approve PR - Super Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-check-circle"></i> Approve Purchase Request
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">PR: {{ pr.pr_number }}</h6>
+                </div>
+                <div class="card-body">
+                    <!-- PR Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">Request Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>PR Number:</strong></td>
+                                    <td>{{ pr.pr_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Requester:</strong></td>
+                                    <td>{{ pr.requester_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Department:</strong></td>
+                                    <td>{{ pr.department_name or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>From:</strong></td>
+                                    <td>{{ pr.from_field or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reason:</strong></td>
+                                    <td>{{ pr.justification or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created Date:</strong></td>
+                                    <td>{{ pr.created_at.strftime('%Y-%m-%d %H:%M') if pr.created_at else 'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- PR Items -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary">Requested Items</h5>
+                            {% if pr_items %}
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Asset Type</th>
+                                            <th>Quantity Required</th>
+                                            <th>Stock Available</th>
+                                            <th>Quantity to Procure</th>
+                                            <th>Use Stock</th>
+                                            <th>Stock Reason</th>
+                                            <th>Configuration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in pr_items %}
+                                        <tr>
+                                            <td>{{ item.asset_type_name or 'N/A' }}</td>
+                                            <td>{{ item.quantity_required }}</td>
+                                            <td>{{ item.stock_available }}</td>
+                                            <td>{{ item.quantity_to_procure }}</td>
+                                            <td>{{ item.use_stock or 'Yes' }}</td>
+                                            <td>{{ item.stock_reason or 'N/A' }}</td>
+                                            <td>{{ item.configuration or 'N/A' }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                No items found for this purchase request.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Approval Form -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="text-success">Approval Decision</h5>
+                            <form method="POST">
+                                <div class="form-group">
+                                    <label for="notes"><strong>Approval Notes (Optional):</strong></label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Enter any additional notes for this approval..."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-check"></i> Approve Purchase Request
+                                    </button>
+                                    <a href="/super-admin/pr-details/{{ pr.id }}" class="btn btn-secondary btn-lg ml-2">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

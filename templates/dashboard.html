@@ -1,279 +1,513 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="w-100 d-flex justify-content-center mb-4 mt-3">
-  <h2 class="text-center">Asset Management Dashboard</h2>
-</div>
-
 <div class="container-fluid">
-  <!-- Total Assets Section -->
-  <div class="row mb-2">
+  <!-- Header Section -->
+  <div class="row mb-4">
     <div class="col-12">
-      <h4 class="text-center mb-1 text-muted">Total Assets</h4>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-tachometer-alt text-primary me-2"></i>
+            {% if is_user %}
+              My Dashboard
+            {% else %}
+              Admin Dashboard
+            {% endif %}
+          </h1>
+          <p class="text-muted">Welcome back, {{ current_user.email }}</p>
+        </div>
+        <div class="text-end">
+          <span class="badge bg-{{ 'success' if is_user else 'primary' }} fs-6 px-3 py-2">
+            <i class="fas fa-{{ 'user' if is_user else 'user-shield' }} me-1"></i>
+            {% if is_user %}
+              User
+            {% else %}
+              Administrator
+            {% endif %}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="row justify-content-center mb-2">
-    <div class="dashboard-row">
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-total-laptop text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-laptop" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Laptops</h5>
-            <h2 id="total-laptop-count">0</h2>
-          </div>
+
+  <!-- Asset Status Cards -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            {% if is_user %}
+              My Assigned Assets Overview
+            {% else %}
+              Asset Status Overview
+            {% endif %}
+          </h6>
         </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-total-mouse text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-mouse" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Mouses</h5>
-            <h2 id="total-mouse-count">0</h2>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-total-keyboard text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-keyboard" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Keyboards</h5>
-            <h2 id="total-keyboard-count">0</h2>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-total-system text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-pc-display" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Systems</h5>
-            <h2 id="total-system-count">0</h2>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="status-card bg-gradient-primary text-white">
+                <div class="status-card-content">
+                  <div class="status-card-icon">
+                    <i class="fas fa-laptop"></i>
+                  </div>
+                  <div class="status-card-info">
+                    <h4 id="laptop-total">0</h4>
+                    <p>Laptops</p>
+                  </div>
+                </div>
+                <div class="status-card-details">
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <small>Available</small>
+                      <div id="laptop-available">0</div>
+                    </div>
+                    <div class="col-6">
+                      <small>Assigned</small>
+                      <div id="laptop-assigned">0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="status-card bg-gradient-success text-white">
+                <div class="status-card-content">
+                  <div class="status-card-icon">
+                    <i class="fas fa-mouse"></i>
+                  </div>
+                  <div class="status-card-info">
+                    <h4 id="mouse-total">0</h4>
+                    <p>Mice</p>
+                  </div>
+                </div>
+                <div class="status-card-details">
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <small>Available</small>
+                      <div id="mouse-available">0</div>
+                    </div>
+                    <div class="col-6">
+                      <small>Assigned</small>
+                      <div id="mouse-assigned">0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="status-card bg-gradient-warning text-white">
+                <div class="status-card-content">
+                  <div class="status-card-icon">
+                    <i class="fas fa-keyboard"></i>
+                  </div>
+                  <div class="status-card-info">
+                    <h4 id="keyboard-total">0</h4>
+                    <p>Keyboards</p>
+                  </div>
+                </div>
+                <div class="status-card-details">
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <small>Available</small>
+                      <div id="keyboard-available">0</div>
+                    </div>
+                    <div class="col-6">
+                      <small>Assigned</small>
+                      <div id="keyboard-assigned">0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="status-card bg-gradient-info text-white">
+                <div class="status-card-content">
+                  <div class="status-card-icon">
+                    <i class="fas fa-desktop"></i>
+                  </div>
+                  <div class="status-card-info">
+                    <h4 id="system-total">0</h4>
+                    <p>Systems</p>
+                  </div>
+                </div>
+                <div class="status-card-details">
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <small>Available</small>
+                      <div id="system-available">0</div>
+                    </div>
+                    <div class="col-6">
+                      <small>Assigned</small>
+                      <div id="system-assigned">0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Available Assets Section -->
-  <div class="row mb-2">
+  <!-- User's Assigned Assets Section (only for regular users) -->
+  {% if is_user and user_assets %}
+  <div class="row mb-4">
     <div class="col-12">
-      <h4 class="text-center mb-1 text-muted">Available Assets</h4>
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">My Assigned Assets</h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover">
+              <style>
+                .table th {
+                  background-color: #f8f9fc;
+                  font-weight: 600;
+                  font-size: 0.85rem;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                }
+                .table td {
+                  font-size: 0.9rem;
+                  vertical-align: middle;
+                }
+                .badge {
+                  font-size: 0.75rem;
+                }
+                .table-responsive {
+                  border-radius: 0.5rem;
+                  overflow: hidden;
+                }
+              </style>
+              <thead>
+                <tr>
+                  <th>Asset ID</th>
+                  <th>Asset Number</th>
+                  <th>Serial Number</th>
+                  <th>Brand</th>
+                  <th>Asset Type</th>
+                  <th>Specifications</th>
+                  <th>Status</th>
+                  <th>Purchase Date</th>
+                  <th>Warranty Expiry</th>
+                  <th>Invoice Number</th>
+                  <th>Unit</th>
+                  <th>Assigned Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for asset in user_assets %}
+                <tr>
+                  <td>{{ asset.id }}</td>
+                  <td>{{ asset.asset_number or '-' }}</td>
+                  <td>{{ asset.serial_number }}</td>
+                  <td>{{ asset.brand }}</td>
+                  <td>
+                    <span class="badge bg-primary">{{ asset.asset_type }}</span>
+                  </td>
+                  <td>
+                    {% if asset.asset_type and asset.asset_type.lower() == 'laptop' %}
+                      {% if asset.processor %}CPU: {{ asset.processor }}{% endif %}
+                      {% if asset.ram %}{% if asset.processor %}<br>{% endif %}RAM: {{ asset.ram }}{% endif %}
+                      {% if asset.rom %}{% if asset.processor or asset.ram %}<br>{% endif %}Storage: {{ asset.rom }}{% endif %}
+                    {% elif asset.asset_type and asset.asset_type.lower() == 'mouse' %}
+                      {% if asset.mouse_type %}Type: {{ asset.mouse_type }}{% endif %}
+                    {% elif asset.asset_type and asset.asset_type.lower() == 'keyboard' %}
+                      {% if asset.keyboard_type %}Type: {{ asset.keyboard_type }}{% endif %}
+                      {% if asset.keyboard_connection %}{% if asset.keyboard_type %}<br>{% endif %}Connection: {{ asset.keyboard_connection }}{% endif %}
+                    {% elif asset.asset_type and asset.asset_type.lower() == 'printer' %}
+                      {% if asset.printer_type %}Type: {{ asset.printer_type }}{% endif %}
+                      {% if asset.printer_function %}{% if asset.printer_type %}<br>{% endif %}Function: {{ asset.printer_function }}{% endif %}
+                      {% if asset.printer_connectivity %}{% if asset.printer_type or asset.printer_function %}<br>{% endif %}Connectivity: {{ asset.printer_connectivity }}{% endif %}
+                    {% elif asset.asset_type and asset.asset_type.lower() in ['system', 'systems'] %}
+                      {% if asset.system_type %}Type: {{ asset.system_type }}{% endif %}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge bg-{{ 'success' if asset.status == 'assigned' else 'warning' if asset.status == 'maintenance' else 'danger' if asset.status == 'retired' else 'primary' }}">
+                      {{ asset.status or 'assigned' }}
+                    </span>
+                  </td>
+                  <td>{{ asset.purchase_date.strftime('%Y-%m-%d') if asset.purchase_date else '-' }}</td>
+                  <td>
+                    {% if asset.warranty_expiry %}
+                      <span class="badge bg-success">{{ asset.warranty_expiry.strftime('%Y-%m-%d') }}</span>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>{{ asset.invoice_number or '-' }}</td>
+                  <td>{{ asset.unit or '-' }}</td>
+                  <td>{{ asset.assigned_at.strftime('%Y-%m-%d') if asset.assigned_at else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="12" class="text-center text-muted">No assets assigned to you yet.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="row justify-content-center mb-2">
-    <div class="dashboard-row">
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-available-laptop text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-laptop" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Laptops</h5>
-            <h2 id="available-laptop-count">0</h2>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-available-mouse text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-mouse" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Mouses</h5>
-            <h2 id="available-mouse-count">0</h2>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-available-keyboard text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-keyboard" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Keyboards</h5>
-            <h2 id="available-keyboard-count">0</h2>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-available-system text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-pc-display" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Systems</h5>
-            <h2 id="available-system-count">0</h2>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% endif %}
 
-  <!-- Assigned Assets Section -->
-  <div class="row mb-2">
-    <div class="col-12">
-      <h4 class="text-center mb-1 text-muted">Assigned Assets</h4>
-    </div>
-  </div>
-  <div class="row justify-content-center mb-2">
-    <div class="dashboard-row">
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-assigned-laptop text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-laptop" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Laptops</h5>
-            <h2 id="assigned-laptop-count">0</h2>
-          </div>
+  <!-- Asset Distribution (Admin Only) -->
+  {% if not is_user %}
+  <div class="row mb-4">
+    <div class="col-xl-8 col-lg-7">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Asset Distribution by Type</h6>
         </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-assigned-mouse text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-mouse" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Mouses</h5>
-            <h2 id="assigned-mouse-count">0</h2>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-assigned-keyboard text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-keyboard" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Keyboards</h5>
-            <h2 id="assigned-keyboard-count">0</h2>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-2 col-sm-6 mb-3">
-        <div class="card bg-gradient-assigned-system text-white border-0 shadow-sm dashboard-card" style="height: 140px;">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <div class="mb-2"><i class="bi bi-pc-display" style="font-size: 2rem;"></i></div>
-            <h5 class="card-title">Systems</h5>
-            <h2 id="assigned-system-count">0</h2>
+        <div class="card-body">
+          <div class="chart-area">
+            <canvas id="assetTypeChart"></canvas>
           </div>
         </div>
       </div>
     </div>
+
+    <div class="col-xl-4 col-lg-5">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Asset Types Overview</h6>
+        </div>
+        <div class="card-body">
+          {% for asset in asset_counts %}
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+              <div class="asset-icon me-3">
+                <i class="fas fa-{{ 'laptop' if asset.asset_type == 'Laptop' else 'mouse' if asset.asset_type == 'Mouse' else 'keyboard' if asset.asset_type == 'Keyboard' else 'desktop' }}"></i>
+              </div>
+              <div>
+                <div class="text-sm font-weight-bold">{{ asset.asset_type }}</div>
+                <div class="text-xs text-muted">Total: {{ asset.count }}</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-weight-bold text-primary">{{ asset.count }}</div>
+              <div class="progress mt-1" style="height: 4px; width: 60px;">
+                <div class="progress-bar bg-primary" role="progressbar" 
+                     style="width: {{ (asset.count / (asset_counts|sum(attribute='count') or 1) * 100)|round(1) }}%"></div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
   </div>
+  {% endif %}
 </div>
 
-<!-- Gradient CSS for each tile -->
+<!-- Professional Dashboard Styles -->
 <style>
-  body, .dashboard-card, .card-title, .dashboard-card h2 {
-    font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif !important;
+
+  
+  /* Chart area styling */
+  .chart-area {
+    position: relative;
+    height: 20rem;
+    width: 100%;
   }
-  .dashboard-card {
-    border-radius: 1rem;
-    transition: transform 0.2s;
-    min-height: 85px;
-    max-height: 120px;
-    min-width: 120px;
-    max-width: 170px;
+  
+  /* Asset icon styling */
+  .asset-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(78, 115, 223, 0.1);
+    border-radius: 50%;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    margin-bottom: 0.2rem;
-    padding: 0.1rem 0.1rem;
-  }
-  .dashboard-card:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 12px rgba(0,0,0,0.10);
-  }
-  .dashboard-card h2 {
-    font-size: 1.1rem;
-    font-weight: 800;
-    margin: 0;
-    word-break: break-word;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .dashboard-card .card-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 0.1rem;
-  }
-  .dashboard-card i {
-    font-size: 1.2rem;
-    margin-bottom: 0.1rem;
-  }
-  .dashboard-row {
-    display: flex;
-    flex-wrap: wrap;
     justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    color: #4e73df;
   }
-  .dashboard-section-title {
-    font-size: 1rem;
+  
+  /* Status cards styling */
+  .status-card {
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  }
+  
+  .status-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+  }
+  
+  .status-card-content {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .status-card-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+  }
+  
+  .status-card-info h4 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  
+  .status-card-info p {
+    margin: 0;
+    opacity: 0.9;
+    font-weight: 500;
+  }
+  
+  .status-card-details {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .status-card-details small {
+    opacity: 0.8;
+    font-size: 0.75rem;
+  }
+  
+  .status-card-details div {
     font-weight: 600;
-    color: #888;
-    margin-bottom: 0.3rem;
-    margin-top: 0.3rem;
+    font-size: 1.1rem;
   }
-  /* Gradient backgrounds for each tile */
-  .bg-gradient-total-laptop { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-  .bg-gradient-total-mouse { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-  .bg-gradient-total-keyboard { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-  .bg-gradient-total-system { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-  .bg-gradient-available-laptop { background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%); }
-  .bg-gradient-available-mouse { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%); }
-  .bg-gradient-available-keyboard { background: linear-gradient(135deg, #c471f5 0%, #fa71cd 100%); }
-  .bg-gradient-available-system { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
-  .bg-gradient-assigned-laptop { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-  .bg-gradient-assigned-mouse { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
-  .bg-gradient-assigned-keyboard { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); }
-  .bg-gradient-assigned-system { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%); }
-  @media (max-width: 1200px) {
-    .dashboard-card {
-      min-width: 100px;
-      max-width: 140px;
-      min-height: 65px;
-      max-height: 100px;
-    }
-    .dashboard-card h2 {
-      font-size: 0.9rem;
-    }
-    .dashboard-card .card-title {
-      font-size: 0.8rem;
-    }
-    .dashboard-card i {
-      font-size: 1rem;
-    }
+  
+  /* Gradient backgrounds */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
+  
+  .bg-gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  }
+  
+  .bg-gradient-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+  
+  .bg-gradient-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+  
+  /* Responsive design */
   @media (max-width: 768px) {
-    .dashboard-row {
-      gap: 0.2rem;
+    .chart-area {
+      height: 15rem;
     }
-    .dashboard-card {
-      min-width: 80px;
-      max-width: 110px;
-      min-height: 55px;
-      max-height: 80px;
-      padding: 0.05rem 0.05rem;
+    
+    .status-card {
+      padding: 1rem;
     }
-    .dashboard-card h2 {
-      font-size: 0.8rem;
+    
+    .status-card-info h4 {
+      font-size: 1.5rem;
     }
-    .dashboard-card .card-title {
-      font-size: 0.7rem;
-    }
-    .dashboard-card i {
-      font-size: 0.8rem;
+    
+    .status-card-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
     }
   }
 </style>
 
+<!-- Chart.js for asset distribution -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-function updateDashboardTiles() {
-  fetch('/api/available_assets').then(r => r.json()).then(available => {
-    fetch('/api/assigned_assets').then(r => r.json()).then(assigned => {
-      // Asset types
-      const types = ['laptop', 'mouse', 'keyboard', 'system'];
-      types.forEach(type => {
-        const availableCount = available[type] || 0;
-        const assignedCount = assigned[type] || 0;
-        // Set available and assigned
-        document.getElementById(`available-${type}-count`).textContent = availableCount;
-        document.getElementById(`assigned-${type}-count`).textContent = assignedCount;
-        // Set total as sum of available + assigned
-        document.getElementById(`total-${type}-count`).textContent = availableCount + assignedCount;
-      });
+// Load asset counts
+function loadAssetCounts() {
+  fetch('/api/available_assets')
+    .then(response => response.json())
+    .then(available => {
+      fetch('/api/assigned_assets')
+        .then(response => response.json())
+        .then(assigned => {
+          // Update status cards
+          const types = ['laptop', 'mouse', 'keyboard', 'system'];
+          types.forEach(type => {
+            const availableCount = available[type] || 0;
+            const assignedCount = assigned[type] || 0;
+            const totalCount = availableCount + assignedCount;
+            
+            document.getElementById(`${type}-total`).textContent = totalCount;
+            document.getElementById(`${type}-available`).textContent = availableCount;
+            document.getElementById(`${type}-assigned`).textContent = assignedCount;
+          });
+        });
     });
-  });
 }
-updateDashboardTiles();
-setInterval(updateDashboardTiles, 2000);
+
+// Asset type chart (Admin only)
+{% if not is_user %}
+const ctx = document.getElementById('assetTypeChart').getContext('2d');
+const assetTypeChart = new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    labels: {{ asset_counts|map(attribute='asset_type')|list|tojson }},
+    datasets: [{
+      data: {{ asset_counts|map(attribute='count')|list|tojson }},
+      backgroundColor: [
+        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+        '#858796', '#5a5c69', '#2e59d9', '#17a673', '#2c9faf'
+      ],
+      hoverBackgroundColor: [
+        '#2e59d9', '#17a673', '#2c9faf', '#f4b619', '#e02424',
+        '#6b6d7d', '#4a4b54', '#224abe', '#13855c', '#1f8a9a'
+      ],
+      hoverBorderColor: "rgba(234, 236, 244, 1)",
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: false,
+      caretPadding: 10,
+    },
+    legend: {
+      display: true,
+      position: 'bottom'
+    },
+    cutoutPercentage: 80,
+  },
+});
+{% endif %}
+
+// Load counts on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadAssetCounts();
+});
+
+// Refresh data every 5 seconds
+setInterval(loadAssetCounts, 5000);
 </script>
 {% endblock %} 

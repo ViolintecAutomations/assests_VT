@@ -1,0 +1,473 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-shopping-cart text-primary me-2"></i>
+            Procurement Dashboard
+          </h1>
+          <p class="text-muted">Manage IT procurement processes and track progress</p>
+        </div>
+        <div class="text-end">
+          <span class="badge bg-primary fs-6 px-3 py-2">
+            <i class="fas fa-chart-line me-1"></i>
+            Procurement Overview
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Metrics Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Pending PRs
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800" id="pending-prs-count">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-clock fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Approved PRs
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800" id="approved-prs-count">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Pending Deliveries
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800" id="pending-deliveries-count">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-truck fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-danger shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                Overdue Payments
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800" id="overdue-payments-count">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="action-card bg-gradient-primary text-white">
+                <div class="action-card-content">
+                  <div class="action-card-icon">
+                    <i class="fas fa-plus-circle"></i>
+                  </div>
+                  <div class="action-card-info">
+                    <h5>Create PR</h5>
+                    <p>Create new purchase request</p>
+                  </div>
+                </div>
+                <div class="action-card-footer">
+                  <a href="/procurement/create-pr" class="btn btn-light btn-sm w-100">
+                    <i class="fas fa-arrow-right me-1"></i>Get Started
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="action-card bg-gradient-success text-white">
+                <div class="action-card-content">
+                  <div class="action-card-icon">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                  <div class="action-card-info">
+                    <h5>Approve PRs</h5>
+                    <p>Review and approve requests</p>
+                  </div>
+                </div>
+                <div class="action-card-footer">
+                  <a href="/procurement/approvals" class="btn btn-light btn-sm w-100">
+                    <i class="fas fa-arrow-right me-1"></i>Review
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="action-card bg-gradient-info text-white">
+                <div class="action-card-content">
+                  <div class="action-card-icon">
+                    <i class="fas fa-upload"></i>
+                  </div>
+                  <div class="action-card-info">
+                    <h5>Upload PO</h5>
+                    <p>Upload purchase orders</p>
+                  </div>
+                </div>
+                <div class="action-card-footer">
+                  <a href="/procurement/upload-po" class="btn btn-light btn-sm w-100">
+                    <i class="fas fa-arrow-right me-1"></i>Upload
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="action-card bg-gradient-warning text-white">
+                <div class="action-card-content">
+                  <div class="action-card-icon">
+                    <i class="fas fa-box"></i>
+                  </div>
+                  <div class="action-card-info">
+                    <h5>Record Delivery</h5>
+                    <p>Track item deliveries</p>
+                  </div>
+                </div>
+                <div class="action-card-footer">
+                  <a href="/procurement/delivery-entry" class="btn btn-light btn-sm w-100">
+                    <i class="fas fa-arrow-right me-1"></i>Record
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activities Section -->
+  <div class="row">
+    <div class="col-xl-6 col-lg-7">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Recent Purchase Requests</h6>
+          <a href="/procurement/approvals" class="btn btn-sm btn-primary">
+            <i class="fas fa-eye me-1"></i>View All
+          </a>
+        </div>
+        <div class="card-body">
+          <div id="recent-prs" class="activity-list">
+            <div class="text-center py-4">
+              <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+              <p class="text-muted mt-2">Loading recent requests...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-6 col-lg-5">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Upcoming Deliveries</h6>
+          <a href="/procurement/delivery-entry" class="btn btn-sm btn-primary">
+            <i class="fas fa-eye me-1"></i>View All
+          </a>
+        </div>
+        <div class="card-body">
+          <div id="upcoming-deliveries" class="activity-list">
+            <div class="text-center py-4">
+              <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+              <p class="text-muted mt-2">Loading deliveries...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Professional Dashboard Styles -->
+<style>
+  /* Border left colors for metric cards */
+  .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+  .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+  .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+  .border-left-danger { border-left: 0.25rem solid #e74a3b !important; }
+  
+  /* Action cards styling */
+  .action-card {
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    height: 100%;
+  }
+  
+  .action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+  }
+  
+  .action-card-content {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .action-card-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+  }
+  
+  .action-card-info h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .action-card-info p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+  }
+  
+  .action-card-footer {
+    margin-top: auto;
+  }
+  
+  /* Gradient backgrounds */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .bg-gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  }
+  
+  .bg-gradient-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+  
+  .bg-gradient-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+  
+  /* Activity list styling */
+  .activity-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid #e3e6f0;
+    transition: background-color 0.2s ease;
+  }
+  
+  .activity-item:hover {
+    background-color: #f8f9fc;
+  }
+  
+  .activity-item:last-child {
+    border-bottom: none;
+  }
+  
+  .activity-item .badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .action-card {
+      padding: 1rem;
+    }
+    
+    .action-card-info h5 {
+      font-size: 1rem;
+    }
+    
+    .action-card-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+    }
+  }
+</style>
+
+<script>
+// Load dashboard data
+function loadDashboardData() {
+  // Load counts
+  fetch('/api/procurement/dashboard-stats')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('pending-prs-count').textContent = data.stats.pending_prs || 0;
+        document.getElementById('approved-prs-count').textContent = data.stats.approved_prs || 0;
+        document.getElementById('pending-deliveries-count').textContent = data.stats.pending_deliveries || 0;
+        document.getElementById('overdue-payments-count').textContent = data.stats.overdue_payments || 0;
+      }
+    });
+
+  // Load recent PRs
+  fetch('/api/purchase_requests?limit=5')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const container = document.getElementById('recent-prs');
+        if (data.purchase_requests && data.purchase_requests.length > 0) {
+          container.innerHTML = data.purchase_requests.map(pr => `
+            <div class="activity-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="fas fa-file-alt text-primary me-2"></i>
+                    <strong class="text-gray-800">${pr.pr_number}</strong>
+                  </div>
+                  <div class="text-sm text-muted">
+                    <i class="fas fa-user me-1"></i>${pr.requester_name || 'N/A'}
+                    <span class="mx-2">•</span>
+                    <i class="fas fa-building me-1"></i>${pr.department_name || 'N/A'}
+                  </div>
+                </div>
+                <span class="badge bg-${getStatusBadge(pr.status)}">${pr.status}</span>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = `
+            <div class="text-center py-4">
+              <i class="fas fa-inbox fa-2x text-muted"></i>
+              <p class="text-muted mt-2">No recent purchase requests</p>
+            </div>
+          `;
+        }
+      }
+    });
+
+  // Load upcoming deliveries
+  fetch('/api/procurement/upcoming-deliveries')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const container = document.getElementById('upcoming-deliveries');
+        if (data.deliveries && data.deliveries.length > 0) {
+          container.innerHTML = data.deliveries.map(delivery => `
+            <div class="activity-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="fas fa-truck text-warning me-2"></i>
+                    <strong class="text-gray-800">${delivery.po_number}</strong>
+                  </div>
+                  <div class="text-sm text-muted">
+                    <i class="fas fa-calendar me-1"></i>Expected: ${delivery.expected_delivery_date || 'N/A'}
+                  </div>
+                </div>
+                <span class="badge bg-warning">${getDaysUntil(delivery.expected_delivery_date)} days</span>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = `
+            <div class="text-center py-4">
+              <i class="fas fa-truck fa-2x text-muted"></i>
+              <p class="text-muted mt-2">No upcoming deliveries</p>
+            </div>
+          `;
+        }
+      }
+    });
+}
+
+function getStatusBadge(status) {
+  const badges = {
+    'pending': 'warning',
+    'approved': 'success',
+    'rejected': 'danger',
+    'po_created': 'info',
+    'delivered': 'primary',
+    'closed': 'secondary'
+  };
+  return badges[status] || 'secondary';
+}
+
+function getDaysUntil(dateStr) {
+  if (!dateStr) return 'N/A';
+  const today = new Date();
+  const deliveryDate = new Date(dateStr);
+  const diffTime = deliveryDate - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 'Overdue';
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadDashboardData();
+});
+
+// Refresh every 30 seconds
+setInterval(loadDashboardData, 30000);
+</script>
+{% endblock %} 

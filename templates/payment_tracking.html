@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Payment Tracking</h2>
+  <div class="table-responsive mt-4">
+    <table class="table table-bordered table-striped">
+      <thead class="table-dark">
+        <tr>
+          <th>PO Number</th>
+          <th>PO Date</th>
+          <th>Expected Delivery</th>
+          <th>Delivery Date</th>
+          <th>Qty Received</th>
+          <th>Invoice No</th>
+          <th>GRN No</th>
+          <th>Invoice to Finance</th>
+          <th>Payment Terms</th>
+          <th>21st Day Reminder</th>
+          <th>25th Day Reminder</th>
+          <th>Payment Date</th>
+          <th>UTR No</th>
+          <th>Update</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td>{{ p.po_number }}</td>
+          <td>{{ p.po_date }}</td>
+          <td>{{ p.expected_delivery_date }}</td>
+          <td>{{ p.delivery_date }}</td>
+          <td>{{ p.quantity_received }}</td>
+          <td>{{ p.invoice_number }}</td>
+          <td>{{ p.grn_number }}</td>
+          <td>{{ 'Yes' if p.invoice_moved_to_finance else 'No' }}</td>
+          <td>{{ p.payment_terms }}</td>
+          <td>{{ 'Sent' if p.payment_reminder_21_sent else 'No' }}</td>
+          <td>{{ 'Sent' if p.payment_reminder_25_sent else 'No' }}</td>
+          <td>
+            <form method="POST" class="d-flex align-items-center">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="payment_id" value="{{ p.id }}">
+              <input type="date" name="payment_given_date" class="form-control form-control-sm" value="{{ p.payment_given_date|default('', true) }}">
+          </td>
+          <td>
+              <input type="text" name="utr_number" class="form-control form-control-sm" value="{{ p.utr_number|default('', true) }}">
+          </td>
+          <td>
+              <button type="submit" class="btn btn-sm btn-primary">Save</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="14" class="text-center">No payment tracking records found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %} 

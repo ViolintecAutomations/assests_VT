@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.pr-details-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.pr-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
+}
+
+.status-badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+.item-card {
+    border-left: 4px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.detail-row {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.detail-value {
+    color: #6c757d;
+}
+
+.back-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    color: white;
+}
+</style>
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-file-text"></i> PR Details</h2>
+            <small class="text-muted">Purchase Request Information</small>
+        </div>
+        <a href="/procurement/approvals" class="btn back-btn">
+            <i class="bi bi-arrow-left"></i> Back to Approvals
+        </a>
+    </div>
+
+    <!-- PR Header Card -->
+    <div class="card pr-details-card mb-4">
+        <div class="pr-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="mb-2">PR - {{ pr.pr_number }}</h3>
+                    <p class="mb-0 opacity-75">
+                        <i class="bi bi-person"></i> {{ pr.requester_name or 'Unknown' }}
+                        {% if pr.requester_email %}
+                        <span class="ms-3"><i class="bi bi-envelope"></i> {{ pr.requester_email }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="status-badge bg-info">
+                        <i class="bi bi-calendar"></i> {{ pr.created_at.strftime('%Y-%m-%d %H:%M') if pr.created_at else 'N/A' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-row">
+                        <div class="detail-label">Total Amount:</div>
+                        <div class="detail-value">₹{{ "%.2f"|format(pr.total_amount or 0) }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Justification:</div>
+                        <div class="detail-value">{{ pr.justification or 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Details -->
+    {% if approval %}
+    <div class="card pr-details-card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-check-circle"></i> Approval Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-row">
+                        <div class="detail-label">Approver:</div>
+                        <div class="detail-value">{{ approval.approver_name or approval.approver_email or 'N/A' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label d-flex align-items-center">
+                            Status: 
+                            <span class="status-badge ms-2 text-white
+                                {% if approval.status == 'approved' %}bg-success
+                                {% elif approval.status == 'rejected' %}bg-danger
+                                {% else %}bg-warning{% endif %}">
+                                {{ approval.status|upper }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-row">
+                        <div class="detail-label">Approval Date:</div>
+                        <div class="detail-value">
+                            {{ approval.approval_date.strftime('%Y-%m-%d %H:%M') if approval.approval_date else 'Pending' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Purchase Order Details -->
+    {% if po %}
+    <div class="card pr-details-card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Purchase Order Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-row">
+                        <div class="detail-label">PO Number:</div>
+                        <div class="detail-value">{{ po.po_number or 'N/A' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">PO Date:</div>
+                        <div class="detail-value">
+                            {{ po.po_date.strftime('%Y-%m-%d') if po.po_date else 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-row">
+                        <div class="detail-label">Vendor:</div>
+                        <div class="detail-value">{{ po.vendor_name or 'N/A' }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Expected Delivery:</div>
+                        <div class="detail-value">
+                            {{ po.expected_delivery_date.strftime('%Y-%m-%d') if po.expected_delivery_date else 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if po.po_file_path %}
+            <div class="mt-3">
+                <a href="{{ po.po_file_path }}" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-file-earmark"></i> View PO File
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- PR Items -->
+    <div class="card pr-details-card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-list-ul"></i> Approved Items</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if items %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Asset Type</th>
+                            <th>Brand</th>
+                            <th>Vendor</th>
+                            <th>Configuration</th>
+                            <th>Quantity Required</th>
+                            <th>Stock Available</th>
+                            <th>Quantity to Procure</th>
+                            <th>Unit Cost</th>
+                            <th>Total Amount</th>
+                            <th>System Recommended</th>
+                            <th>Recommended</th>
+                            <th>Reason</th>
+                            <th>Approval Justification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        {% set total_amount = (item.unit_cost or 0) * (item.quantity_to_procure or 0) %}
+                        {% set asset_type_name = (item.asset_type_name or '').lower() %}
+                        
+                        {% if asset_type_name == 'laptop' %}
+                            {% if total_amount > 80000 %}
+                                {% set system_recommendation = 'High Cost' %}
+                                {% set system_recommendation_reason = 'Consider lower-cost alternatives' %}
+                                {% set badge_class = 'bg-warning' %}
+                            {% elif total_amount > 50000 %}
+                                {% set system_recommendation = 'Moderate Cost' %}
+                                {% set system_recommendation_reason = 'Within acceptable range' %}
+                                {% set badge_class = 'bg-info' %}
+                            {% else %}
+                                {% set system_recommendation = 'Good Value' %}
+                                {% set system_recommendation_reason = 'Cost-effective option' %}
+                                {% set badge_class = 'bg-success' %}
+                            {% endif %}
+                        {% elif asset_type_name == 'mouse' %}
+                            {% if total_amount > 2000 %}
+                                {% set system_recommendation = 'High Cost' %}
+                                {% set system_recommendation_reason = 'Consider standard mouse options' %}
+                                {% set badge_class = 'bg-warning' %}
+                            {% else %}
+                                {% set system_recommendation = 'Good Value' %}
+                                {% set system_recommendation_reason = 'Reasonable price' %}
+                                {% set badge_class = 'bg-success' %}
+                            {% endif %}
+                        {% else %}
+                            {% if total_amount > 10000 %}
+                                {% set system_recommendation = 'Review Required' %}
+                                {% set system_recommendation_reason = 'Verify cost justification' %}
+                                {% set badge_class = 'bg-warning' %}
+                            {% else %}
+                                {% set system_recommendation = 'Standard' %}
+                                {% set system_recommendation_reason = 'Typical cost range' %}
+                                {% set badge_class = 'bg-info' %}
+                            {% endif %}
+                        {% endif %}
+                        
+                        <tr class="item-card">
+                            <td>{{ loop.index }}</td>
+                            <td>{{ item.asset_type_name or 'N/A' }}</td>
+                            <td>{{ item.brand or 'N/A' }}</td>
+                            <td>{{ item.vendor or 'N/A' }}</td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ item.configuration }}">
+                                    {{ item.configuration or 'N/A' }}
+                                </span>
+                            </td>
+                            <td>{{ item.quantity_required or 'N/A' }}</td>
+                            <td>{{ item.stock_available or 'N/A' }}</td>
+                            <td>{{ item.quantity_to_procure or 'N/A' }}</td>
+                            <td>₹{{ "%.2f"|format(item.unit_cost or 0) }}</td>
+                            <td class="fw-bold">₹{{ "%.2f"|format(total_amount) }}</td>
+                            <td>
+                                <span class="badge {{ badge_class }}">
+                                    {{ system_recommendation }}
+                                </span>
+                                <br><small class="text-muted">{{ system_recommendation_reason }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if item.favor == 'Yes' %}bg-success{% elif item.favor == 'No' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ item.favor or 'Not Selected' }}
+                                </span>
+                            </td>
+                            <td><small class="text-muted">{{ item.favor_reason or 'N/A' }}</small></td>
+                            <td><small class="text-muted">{{ item.approval_justification or 'N/A' }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2">No approved items found for this PR</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Add any JavaScript functionality here if needed
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize any interactive features
+});
+</script>
+{% endblock %} 

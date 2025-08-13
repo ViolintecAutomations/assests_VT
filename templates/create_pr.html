@@ -1,0 +1,2289 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      {% if approval_status %}
+      <div class="alert alert-info text-center">
+        <strong>Approval Status:</strong> {{ approval_status|capitalize }}
+      </div>
+      {% endif %}
+      
+      <!-- Header Section -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+          <i class="bi bi-file-earmark-plus text-primary"></i> Create PR
+        </h2>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+            <i class="bi bi-arrow-left"></i> Back
+          </button>
+        </div>
+      </div>
+      
+      <form id="prForm">
+        <!-- Basic PR Information -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h5 class="mb-0">
+              <i class="bi bi-info-circle"></i> Request Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="from_field" class="form-label fw-bold">
+                    <i class="bi bi-person"></i> From
+                  </label>
+                  <input type="text" class="form-control" id="from_field" name="from_field" 
+                         placeholder="Enter sender/department" required>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="justification" class="form-label fw-bold">
+                    <i class="bi bi-people"></i> For
+                  </label>
+                  <select class="form-control" id="justification" name="justification" required>
+                    <option value="">Select Purpose</option>
+                    <option value="HR New Joiner">HR New Joiner</option>
+                    <option value="Replacement">Replacement</option>
+                    <option value="Upgrade">Upgrade</option>
+                    <option value="Additional">Additional</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Project">Project</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="approver" class="form-label fw-bold">
+                    <i class="bi bi-shield-check"></i> Approver
+                  </label>
+                  <div class="d-flex gap-2">
+                    <select class="form-control" id="approver" name="approver_id" required>
+                      <option value="">Select Approver</option>
+                      <!-- Will be populated by JavaScript -->
+                    </select>
+                    {% if user_role == 'admin' %}
+                    <button type="button" class="btn btn-outline-primary" onclick="addApprover()" title="Add New Approver">
+                      <i class="bi bi-plus"></i>
+                    </button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Section -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h5 class="mb-0">
+              <i class="bi bi-box-seam"></i> Items
+            </h5>
+            <button type="button" class="btn btn-light btn-sm" onclick="addItem()">
+              <i class="bi bi-plus-circle"></i> Add Item
+            </button>
+          </div>
+          <div class="card-body">
+            <div id="itemsContainer">
+              <!-- Items will be added here dynamically -->
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="card shadow-sm mb-4" style="display: none;">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-calculator"></i> Summary
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-4 fw-bold text-primary" id="totalItems">0</div>
+                  <div class="text-muted">Total Items</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-4 fw-bold text-success" id="totalQuantity">0</div>
+                  <div class="text-muted">Total Quantity</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-4 fw-bold text-warning" id="totalQuantityToProcure">0</div>
+                  <div class="text-muted">To Procure</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-4 fw-bold text-danger">₹<span id="totalAmount">0.00</span></div>
+                  <div class="text-muted">Total Amount</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-center gap-3 mb-4">
+          <button type="button" class="btn btn-primary btn-lg" onclick="showPRPreview()">
+            <i class="bi bi-eye"></i> Preview PR Items
+          </button>
+          <button type="submit" class="btn btn-success btn-lg" id="submitPRBtn" style="display: none;">
+            <i class="bi bi-send"></i> Create PR
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- PR Preview Modal -->
+<div class="modal fade" id="prPreviewModal" tabindex="-1" aria-labelledby="prPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="prPreviewModalLabel">PR Items Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          <strong>Review your PR items before creating the Purchase Request.</strong>
+          <br>Please verify all details are correct before proceeding.
+        </div>
+        
+        <!-- PR Information Summary -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <div class="card border-primary">
+              <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                  <i class="bi bi-file-text"></i> PR Information
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <strong>From:</strong> <span id="previewFromField">-</span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>For:</strong> <span id="previewJustification">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+                         <thead class="table-dark">
+               <tr>
+                 <th>#</th>
+                 <th>Asset Type</th>
+                 <th>Brand</th>
+                 <th>Vendor</th>
+                 <th>Configuration</th>
+                 <th>Quantity Required</th>
+                 <th>Stock Available</th>
+                 <th>Quantity to Procure</th>
+                 <th>Unit Cost</th>
+                 <th>Total Amount</th>
+                 <th>System Recommended</th>
+                 <th>Recommended</th>
+                 <th>Reason</th>
+               </tr>
+             </thead>
+            <tbody id="prPreviewTableBody">
+              <!-- Items will be populated here -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="noItemsPreviewMessage" class="text-center text-muted py-4">
+          <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+          <p class="mt-2">No items found. Please add items to the PR before previewing.</p>
+        </div>
+        
+
+        
+        <!-- Recommended Items Summary -->
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                  <i class="bi bi-check-circle"></i> Recommended Items Summary
+                </h6>
+              </div>
+              <div class="card-body">
+                <div id="recommendedItemsSummary">
+                  <p class="text-muted">No recommended items found.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-arrow-left"></i> Back to Edit
+        </button>
+        <button type="button" class="btn btn-success" onclick="confirmCreatePR()">
+          <i class="bi bi-check-circle"></i> Confirm & Create PR
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item Template (hidden) -->
+<template id="itemTemplate">
+  <div class="item-row border rounded p-4 mb-4 bg-light">
+    <!-- Item Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="mb-0 text-primary">
+        <i class="bi bi-box-seam"></i> Item <span class="item-number"></span>
+      </h6>
+      <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+        <i class="bi bi-trash"></i> Remove
+      </button>
+    </div>
+
+    <!-- Asset Type Selection -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <label class="form-label fw-bold">
+          <i class="bi bi-gear"></i> Asset Type Selection
+        </label>
+        <div class="d-flex gap-3 align-items-end">
+          <!-- Asset Type Dropdown -->
+          <div style="width: 200px;">
+            <select class="form-control asset-type-select">
+              <option value="">Select Asset Type</option>
+              <!-- Will be populated by JavaScript -->
+            </select>
+          </div>
+          <!-- Stock Available Display -->
+          <div class="stock-available-display" style="min-width: 140px;">
+            <label class="form-label small text-muted">Stock Available</label>
+            <div class="badge bg-info fs-6">
+              <i class="bi bi-box-seam"></i> <span class="stock-count">-</span>
+            </div>
+          </div>
+          <!-- Quantity Field -->
+          <div style="min-width: 120px;">
+            <label class="form-label small text-muted">Quantity</label>
+            <input type="number" class="form-control form-control-sm quantity" min="1" placeholder="1" required>
+          </div>
+          <!-- Quantity to Procure Display -->
+          <div style="min-width: 140px; text-align: center;">
+            <label class="form-label small text-muted">Quantity to Procure</label>
+            <div class="badge bg-warning fs-6">
+              <i class="bi bi-calculator"></i> <span class="quantity-to-procure">0</span>
+            </div>
+          </div>
+          <!-- Use Stock Dropdown -->
+          <div class="use-stock-control" style="min-width: 120px;">
+            <label class="form-label small text-muted">Use Stock</label>
+            <select class="form-control form-control-sm use-stock-select">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+        <!-- Reason Field (hidden by default) -->
+        <div class="stock-reason-section mt-3" style="display: none;">
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label text-warning">
+                <i class="bi bi-exclamation-triangle"></i> Reason for Not Using Stock
+              </label>
+              <textarea class="form-control stock-reason" rows="2" 
+                        placeholder="Please provide a reason for not using available stock..."></textarea>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" class="asset-type-id" value="">
+        <input type="hidden" class="asset-type-name" value="">
+      </div>
+    </div>
+
+    <!-- Common Fields (always visible) -->
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label fw-bold">
+          <i class="bi bi-tag"></i> Brand
+        </label>
+        <div class="input-group">
+          <select class="form-control brand-select" required>
+            <option value="">Select Brand</option>
+            <!-- Will be populated by JavaScript -->
+          </select>
+          {% if user_role == 'admin' %}
+          <button type="button" class="btn btn-outline-secondary add-brand-btn" title="Add new brand" tabindex="-1">
+            <i class="bi bi-plus"></i>
+          </button>
+          <button type="button" class="btn btn-outline-danger delete-brand-btn" title="Delete brand" tabindex="-1">
+            <i class="bi bi-dash"></i>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">
+          <i class="bi bi-building"></i> Vendor Name
+        </label>
+        <div class="input-group">
+          <select class="form-control vendor-select" required>
+            <option value="">Select Vendor</option>
+            <!-- Will be populated by JavaScript -->
+          </select>
+          {% if user_role == 'admin' %}
+          <button type="button" class="btn btn-outline-secondary add-vendor-btn" title="Add new vendor" tabindex="-1">
+            <i class="bi bi-plus"></i>
+          </button>
+          <button type="button" class="btn btn-outline-danger delete-vendor-btn" title="Delete vendor" tabindex="-1">
+            <i class="bi bi-dash"></i>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">
+          <i class="bi bi-currency-rupee"></i> Unit Cost
+        </label>
+        <input type="number" class="form-control unit-cost" step="0.01" placeholder="0.00" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">
+          <i class="bi bi-calculator"></i> Total Amount
+        </label>
+        <input type="text" class="form-control item-total-amount" value="₹0.00" readonly tabindex="-1">
+      </div>
+    </div>
+
+    <div class="row g-3 mt-2">
+      <div class="col-md-3">
+        <label class="form-label fw-bold">
+          <i class="bi bi-star"></i> Recommended
+        </label>
+        <select class="form-control favor-select" required>
+          <option value="">Select...</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+      <div class="col-md-9">
+        <label class="form-label fw-bold">
+          <i class="bi bi-chat-text"></i> Reason
+        </label>
+        <input type="text" class="form-control favor-reason" 
+               placeholder="Please provide a reason for your recommendation..." style="display: none;">
+      </div>
+    </div>
+
+
+
+    <!-- Laptop Specific Fields -->
+    <div class="laptop-fields" style="display: none;">
+      <div class="row mt-3">
+        <div class="col-md-3">
+          <label class="form-label">Processor</label>
+          <select class="form-control processor">
+            <option value="">Select Processor</option>
+            <option value="Intel i3">Intel i3</option>
+            <option value="Intel i5">Intel i5</option>
+            <option value="Intel i7">Intel i7</option>
+            <option value="Intel i9">Intel i9</option>
+            <option value="AMD Ryzen 3">AMD Ryzen 3</option>
+            <option value="AMD Ryzen 5">AMD Ryzen 5</option>
+            <option value="AMD Ryzen 7">AMD Ryzen 7</option>
+            <option value="AMD Ryzen 9">AMD Ryzen 9</option>
+            <option value="Intel Core M">Intel Core M</option>
+            <option value="Intel Pentium">Intel Pentium</option>
+            <option value="Intel Celeron">Intel Celeron</option>
+            <option value="Apple M1">Apple M1</option>
+            <option value="Apple M2">Apple M2</option>
+            <option value="Apple M3">Apple M3</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">RAM</label>
+          <select class="form-control ram">
+            <option value="">Select RAM</option>
+            <option value="4GB">4GB</option>
+            <option value="8GB">8GB</option>
+            <option value="16GB">16GB</option>
+            <option value="32GB">32GB</option>
+            <option value="64GB">64GB</option>
+            <option value="128GB">128GB</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ROM</label>
+          <select class="form-control rom">
+            <option value="">Select Storage</option>
+            <option value="128GB SSD">128GB SSD</option>
+            <option value="256GB SSD">256GB SSD</option>
+            <option value="512GB SSD">512GB SSD</option>
+            <option value="1TB SSD">1TB SSD</option>
+            <option value="2TB SSD">2TB SSD</option>
+            <option value="4TB SSD">4TB SSD</option>
+            <option value="500GB HDD">500GB HDD</option>
+            <option value="1TB HDD">1TB HDD</option>
+            <option value="2TB HDD">2TB HDD</option>
+            <option value="4TB HDD">4TB HDD</option>
+            <option value="128GB NVMe">128GB NVMe</option>
+            <option value="256GB NVMe">256GB NVMe</option>
+            <option value="512GB NVMe">512GB NVMe</option>
+            <option value="1TB NVMe">1TB NVMe</option>
+            <option value="2TB NVMe">2TB NVMe</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mouse Specific Fields -->
+    <div class="mouse-fields" style="display: none;">
+      <div class="row mt-3">
+        <div class="col-md-3">
+          <label class="form-label">Type</label>
+          <div class="input-group">
+            <select class="form-control mouse-type">
+              <option value="">Select Type</option>
+              <option value="wired">Wired</option>
+              <option value="wireless">Wireless</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary add-mouse-type-btn" title="Add new mouse type" tabindex="-1">
+              <i class="bi bi-plus"></i>
+            </button>
+            <button type="button" class="btn btn-outline-danger delete-mouse-type-btn" title="Delete mouse type" tabindex="-1">
+              <i class="bi bi-dash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Specific Fields -->
+    <div class="keyboard-fields" style="display: none;">
+      <div class="row mt-3">
+        <div class="col-md-3">
+          <label class="form-label">Type</label>
+          <div class="input-group">
+            <select class="form-control keyboard-type">
+              <option value="">Select Type</option>
+              <option value="mechanical">Mechanical</option>
+              <option value="membrane">Membrane</option>
+              <option value="scissor">Scissor Switch</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary add-keyboard-type-btn" title="Add new keyboard type" tabindex="-1">
+              <i class="bi bi-plus"></i>
+            </button>
+            <button type="button" class="btn btn-outline-danger delete-keyboard-type-btn" title="Delete keyboard type" tabindex="-1">
+              <i class="bi bi-dash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Connection</label>
+          <div class="input-group">
+            <select class="form-control keyboard-connection">
+              <option value="">Select Connection</option>
+              <option value="wired">Wired</option>
+              <option value="wireless">Wireless</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary add-keyboard-connection-btn" title="Add new keyboard connection" tabindex="-1">
+              <i class="bi bi-plus"></i>
+            </button>
+            <button type="button" class="btn btn-outline-danger delete-keyboard-connection-btn" title="Delete keyboard connection" tabindex="-1">
+              <i class="bi bi-dash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Printer Specific Fields -->
+    <div class="printer-fields" style="display: none;">
+      <div class="row mt-3">
+        <div class="col-md-3">
+          <label class="form-label">Type</label>
+          <div class="input-group">
+            <select class="form-control printer-type">
+              <option value="">Select Type</option>
+              <option value="inkjet">Inkjet</option>
+              <option value="laser">Laser</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary add-printer-type-btn" title="Add new printer type" tabindex="-1">
+              <i class="bi bi-plus"></i>
+            </button>
+            <button type="button" class="btn btn-outline-danger delete-printer-type-btn" title="Delete printer type" tabindex="-1">
+              <i class="bi bi-dash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Function</label>
+          <div class="input-group">
+            <select class="form-control printer-function">
+              <option value="">Select Function</option>
+              <option value="print">Print</option>
+              <option value="print-scan-copy">Print-Scan-Copy</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary add-printer-function-btn" title="Add new printer function" tabindex="-1">
+              <i class="bi bi-plus"></i>
+            </button>
+            <button type="button" class="btn btn-outline-danger delete-printer-function-btn" title="Delete printer function" tabindex="-1">
+              <i class="bi bi-dash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Connectivity</label>
+          <div class="input-group">
+            <select class="form-control printer-connectivity">
+              <option value="">Select Connectivity</option>
+              <option value="usb">USB</option>
+              <option value="wifi">Wi-Fi</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary add-printer-connectivity-btn" title="Add new printer connectivity" tabindex="-1">
+              <i class="bi bi-plus"></i>
+            </button>
+            <button type="button" class="btn btn-outline-danger delete-printer-connectivity-btn" title="Delete printer connectivity" tabindex="-1">
+              <i class="bi bi-dash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Specific Fields -->
+    <div class="system-fields" style="display: none;">
+      <div class="row mt-3">
+        <div class="col-md-3">
+          <label class="form-label">Processor</label>
+          <input type="text" class="form-control processor" placeholder="e.g., Intel i7">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">RAM</label>
+          <input type="text" class="form-control ram" placeholder="e.g., 16GB">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ROM</label>
+          <input type="text" class="form-control rom" placeholder="e.g., 512GB SSD">
+        </div>
+      </div>
+    </div>
+
+    <!-- Others Specific Fields -->
+    <div class="others-fields" style="display: none;">
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <label class="form-label">Description</label>
+          <textarea class="form-control description" rows="2" placeholder="Describe the item..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock Information -->
+    <div class="row mt-2">
+      <div class="col-12">
+        <div class="alert alert-info stock-info">
+          <strong>Stock Available:</strong> <span class="stock-available">0</span> | 
+          <strong>Quantity to Procure:</strong> <span class="quantity-to-procure">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mt-2">
+      <div class="col-12 text-end">
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)">
+          <i class="bi bi-trash"></i> Remove Item
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+.asset-type-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Ensure input fields are accessible */
+.unit-cost, .quantity {
+  pointer-events: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+  -moz-user-select: auto !important;
+  -ms-user-select: auto !important;
+}
+
+.unit-cost:focus, .quantity:focus {
+  outline: 2px solid #007bff !important;
+  outline-offset: 2px !important;
+}
+
+/* Remove any potential interference */
+.item-row input[type="number"] {
+  background-color: white !important;
+  color: black !important;
+  border: 1px solid #ced4da !important;
+}
+
+.item-row input[type="number"]:disabled {
+  background-color: #e9ecef !important;
+  opacity: 0.65 !important;
+}
+</style>
+
+<script>
+let itemCounter = 0;
+let departments = [];
+let assetTypesLoaded = false;
+let brandsLoaded = false;
+let vendorsLoaded = false;
+
+// Asset type configurations
+const assetTypeConfigs = {
+  laptop: {
+    id: 1,
+    name: 'Laptop',
+    fields: ['processor', 'ram', 'rom'],
+    requiredFields: ['processor', 'ram', 'rom']
+  },
+  mouse: {
+    id: 2,
+    name: 'Mouse',
+    fields: ['mouse-type'],
+    requiredFields: ['mouse-type']
+  },
+  keyboard: {
+    id: 48,
+    name: 'keyboard',
+    fields: ['keyboard-type', 'keyboard-connection'],
+    requiredFields: ['keyboard-type', 'keyboard-connection']
+  },
+  printer: {
+    id: 41,
+    name: 'Printer',
+    fields: ['printer-type', 'printer-function', 'printer-connectivity'],
+    requiredFields: ['printer-type', 'printer-function', 'printer-connectivity']
+  },
+  system: {
+    id: 59,
+    name: 'System',
+    fields: ['processor', 'ram', 'rom'],
+    requiredFields: ['processor', 'ram', 'rom']
+  },
+  others: {
+    id: 60,
+    name: 'Others',
+    fields: ['description'],
+    requiredFields: ['description']
+  }
+};
+
+function onInitialDataLoaded() {
+  if (assetTypesLoaded && brandsLoaded && vendorsLoaded) {
+    addItem(); // Add first item by default
+    initializeItemDropdowns(); // Ensure all dropdowns are initialized
+    enableAllInputFields(); // Ensure all input fields are enabled
+  }
+}
+
+function enableAllInputFields() {
+  console.log('Enabling all input fields...');
+  const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
+  inputs.forEach(input => {
+    input.disabled = false;
+    input.readOnly = false;
+    input.style.pointerEvents = 'auto';
+    input.style.userSelect = 'auto';
+    input.style.webkitUserSelect = 'auto';
+    input.style.mozUserSelect = 'auto';
+    input.style.msUserSelect = 'auto';
+    
+    // Add a click event to ensure focus works
+    input.addEventListener('click', function(e) {
+      console.log('Input clicked:', this);
+      this.focus();
+    });
+    
+    // Add a focus event to ensure it's working
+    input.addEventListener('focus', function(e) {
+      console.log('Input focused:', this);
+    });
+    
+    console.log('Input field enabled:', input);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadAssetTypes();
+  loadDepartments();
+  loadApprovers();
+  loadBrands();
+  loadVendors();
+  
+  // Test input fields after a short delay
+  setTimeout(() => {
+    testInputFields();
+  }, 1000);
+});
+
+function testInputFields() {
+  console.log('Testing input fields...');
+  const testInputs = document.querySelectorAll('.unit-cost, .quantity');
+  testInputs.forEach((input, index) => {
+    console.log(`Input ${index}:`, {
+      element: input,
+      disabled: input.disabled,
+      readOnly: input.readOnly,
+      style: input.style.cssText,
+      value: input.value
+    });
+  });
+}
+
+function loadAssetTypes() {
+  fetch('/api/asset_types')
+    .then(r => r.json())
+    .then(data => {
+      if (data.types) {
+        window.assetTypes = data.types;
+        assetTypesLoaded = true;
+        populateAssetTypeDropdowns();
+        onInitialDataLoaded();
+      }
+    });
+}
+
+function populateAssetTypeDropdowns() {
+  const dropdowns = document.querySelectorAll('.asset-type-select');
+  dropdowns.forEach(dropdown => {
+    // Clear existing options except the first one
+    while (dropdown.options.length > 1) {
+      dropdown.remove(1);
+    }
+    
+    // Add asset types
+    if (window.assetTypes) {
+      window.assetTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.name.toLowerCase();
+        option.textContent = type.name;
+        dropdown.appendChild(option);
+      });
+    }
+  });
+}
+
+function refreshAssetTypes() {
+  loadAssetTypes();
+}
+
+function loadDepartments() {
+  fetch('/api/departments')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        departments = data.departments;
+      }
+    });
+}
+
+function loadApprovers() {
+  fetch('/api/approvers')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        const select = document.getElementById('approver');
+        data.approvers.forEach(approver => {
+          const option = document.createElement('option');
+          option.value = approver.email; // Use email as value
+          option.textContent = approver.name || approver.email; // Show name if available, fallback to email
+          select.appendChild(option);
+        });
+      } else {
+        console.error('Error loading approvers:', data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error loading approvers:', error);
+    });
+}
+
+function loadBrands() {
+  fetch('/api/brands')
+    .then(r => r.json())
+    .then(data => {
+      if (data.brands) {
+        window.brands = data.brands;
+        brandsLoaded = true;
+        onInitialDataLoaded();
+      }
+    });
+}
+
+function loadVendors() {
+  fetch('/api/vendors')
+    .then(r => r.json())
+    .then(data => {
+      if (data.vendors) {
+        window.vendors = data.vendors;
+        vendorsLoaded = true;
+        onInitialDataLoaded();
+      }
+    });
+}
+
+function addApprover() {
+  const newApproverEmail = prompt('Please enter the email ID:');
+  if (newApproverEmail && newApproverEmail.trim() !== '') {
+    fetch('/api/add_approver', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        email: newApproverEmail.trim()
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        const select = document.getElementById('approver');
+        const option = document.createElement('option');
+        option.value = data.approver_id;
+        option.textContent = data.email;
+        select.appendChild(option);
+        select.value = data.approver_id; // Auto-select the new approver
+        alert('Approver added successfully!');
+      } else {
+        alert('Error adding approver: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error adding approver: ' + error.message);
+    });
+  }
+}
+
+// Helper to initialize dropdowns for all item rows
+function initializeItemDropdowns() {
+  document.querySelectorAll('.item-row').forEach(itemRow => {
+    // Populate brands
+    const brandSelect = itemRow.querySelector('.brand-select');
+    if (brandSelect && window.brands && brandSelect.options.length <= 1) {
+      window.brands.forEach(brand => {
+        const exists = Array.from(brandSelect.options).some(opt => opt.value == brand);
+        if (!exists) {
+          const option = document.createElement('option');
+          option.value = brand;
+          option.textContent = brand;
+          brandSelect.appendChild(option);
+        }
+      });
+    }
+    // Populate vendors
+    const vendorSelect = itemRow.querySelector('.vendor-select');
+    if (vendorSelect && window.vendors && vendorSelect.options.length <= 1) {
+      window.vendors.forEach(vendor => {
+        const exists = Array.from(vendorSelect.options).some(opt => opt.value == vendor);
+        if (!exists) {
+          const option = document.createElement('option');
+          option.value = vendor;
+          option.textContent = vendor;
+          vendorSelect.appendChild(option);
+        }
+      });
+    }
+    
+    // Populate asset types
+    const assetTypeSelect = itemRow.querySelector('.asset-type-select');
+    if (assetTypeSelect && window.assetTypes && assetTypeSelect.options.length <= 1) {
+      window.assetTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.name.toLowerCase();
+        option.textContent = type.name;
+        assetTypeSelect.appendChild(option);
+      });
+    }
+    
+    // Add event listeners for stock check
+    const quantityInput = itemRow.querySelector('.quantity');
+    const assetTypeInput = itemRow.querySelector('.asset-type-id');
+    if (quantityInput && assetTypeInput) {
+      quantityInput.oninput = () => {
+        checkStock(itemRow);
+      };
+      
+      // Add validation for stock availability
+      quantityInput.addEventListener('change', function() {
+        validateStockAvailability(itemRow);
+      });
+    }
+    
+
+    
+
+
+    // Add event listener for the + brand button
+    const addBrandBtn = itemRow.querySelector('.add-brand-btn');
+    if (addBrandBtn && !addBrandBtn._listenerAdded) {
+      addBrandBtn.addEventListener('click', function() {
+        const newBrand = prompt('Enter new brand:');
+        if (newBrand && newBrand.trim() !== '') {
+          const exists = Array.from(document.querySelectorAll('.brand-select option')).some(opt => opt.textContent.trim().toLowerCase() === newBrand.trim().toLowerCase());
+          if (exists) {
+            alert('Brand already exists in dropdown!');
+            return;
+          }
+          fetch('/api/brands', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newBrand.trim() })
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              document.querySelectorAll('.brand-select').forEach(select => {
+                const option = document.createElement('option');
+                option.value = data.name;
+                option.textContent = data.name;
+                select.appendChild(option);
+              });
+              alert(data.message || 'Brand added!');
+            } else {
+              alert('Error: ' + (data.error || 'Could not add brand.'));
+            }
+          })
+          .catch(error => {
+            console.error('Error adding brand:', error);
+            alert('Error adding brand. Please try again.');
+          });
+        }
+      });
+      addBrandBtn._listenerAdded = true;
+    }
+    
+    // Add event listener for the + vendor button
+    const addVendorBtn = itemRow.querySelector('.add-vendor-btn');
+    if (addVendorBtn && !addVendorBtn._listenerAdded) {
+      addVendorBtn.addEventListener('click', function() {
+        const newVendor = prompt('Enter new vendor:');
+        if (newVendor && newVendor.trim() !== '') {
+          const exists = Array.from(document.querySelectorAll('.vendor-select option')).some(opt => opt.textContent.trim().toLowerCase() === newVendor.trim().toLowerCase());
+          if (exists) {
+            alert('Vendor already exists in dropdown!');
+            return;
+          }
+          fetch('/api/vendors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newVendor.trim() })
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              document.querySelectorAll('.vendor-select').forEach(select => {
+                const option = document.createElement('option');
+                option.value = data.name;
+                option.textContent = data.name;
+                select.appendChild(option);
+              });
+              alert(data.message || 'Vendor added!');
+            } else {
+              alert('Error: ' + (data.error || 'Could not add vendor.'));
+            }
+          })
+          .catch(error => {
+            console.error('Error adding vendor:', error);
+            alert('Error adding vendor. Please try again.');
+          });
+        }
+      });
+      addVendorBtn._listenerAdded = true;
+    }
+
+    // Delete Brand Button
+    const deleteBrandBtn = itemRow.querySelector('.delete-brand-btn');
+    if (deleteBrandBtn && !deleteBrandBtn._listenerAdded) {
+      deleteBrandBtn.addEventListener('click', function() {
+        const select = itemRow.querySelector('.brand-select');
+        if (select.selectedIndex > 0) {
+          const selectedBrand = select.options[select.selectedIndex].text;
+          
+          if (confirm(`Are you sure you want to delete the brand "${selectedBrand}"?`)) {
+            fetch(`/api/brands/${encodeURIComponent(selectedBrand)}`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => {
+              if (data.success) {
+                // Remove from all brand selects
+                document.querySelectorAll('.brand-select').forEach(brandSelect => {
+                  for (let i = 0; i < brandSelect.options.length; i++) {
+                    if (brandSelect.options[i].text === selectedBrand) {
+                      brandSelect.remove(i);
+                      break;
+                    }
+                  }
+                });
+                alert('Brand deleted successfully!');
+              } else {
+                alert('Error: ' + (data.error || 'Could not delete brand.'));
+              }
+            })
+            .catch(error => {
+              console.error('Error deleting brand:', error);
+              alert('Error deleting brand. Please try again.');
+            });
+          }
+        } else {
+          alert('Please select a brand to delete.');
+        }
+      });
+      deleteBrandBtn._listenerAdded = true;
+    }
+
+    // Delete Vendor Button
+    const deleteVendorBtn = itemRow.querySelector('.delete-vendor-btn');
+    if (deleteVendorBtn && !deleteVendorBtn._listenerAdded) {
+      deleteVendorBtn.addEventListener('click', function() {
+        const select = itemRow.querySelector('.vendor-select');
+        if (select.selectedIndex > 0) {
+          const selectedVendor = select.options[select.selectedIndex].text;
+          
+          if (confirm(`Are you sure you want to delete the vendor "${selectedVendor}"?`)) {
+            fetch(`/api/vendors/${encodeURIComponent(selectedVendor)}`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => {
+              if (data.success) {
+                // Remove from all vendor selects
+                document.querySelectorAll('.vendor-select').forEach(vendorSelect => {
+                  for (let i = 0; i < vendorSelect.options.length; i++) {
+                    if (vendorSelect.options[i].text === selectedVendor) {
+                      vendorSelect.remove(i);
+                      break;
+                    }
+                  }
+                });
+                alert('Vendor deleted successfully!');
+              } else {
+                alert('Error: ' + (data.error || 'Could not delete vendor.'));
+              }
+            })
+            .catch(error => {
+              console.error('Error deleting vendor:', error);
+              alert('Error deleting vendor. Please try again.');
+            });
+          }
+        } else {
+          alert('Please select a vendor to delete.');
+        }
+      });
+      deleteVendorBtn._listenerAdded = true;
+    }
+
+    // Mouse Type Buttons
+    const addMouseTypeBtn = itemRow.querySelector('.add-mouse-type-btn');
+    if (addMouseTypeBtn && !addMouseTypeBtn._listenerAdded) {
+      addMouseTypeBtn.addEventListener('click', function() {
+        const newType = prompt('Enter new mouse type:');
+        if (newType && newType.trim() !== '') {
+          const select = itemRow.querySelector('.mouse-type');
+          const option = document.createElement('option');
+          option.value = newType.trim().toLowerCase();
+          option.textContent = newType.trim();
+          select.appendChild(option);
+          alert('Mouse type added!');
+        }
+      });
+      addMouseTypeBtn._listenerAdded = true;
+    }
+
+    const deleteMouseTypeBtn = itemRow.querySelector('.delete-mouse-type-btn');
+    if (deleteMouseTypeBtn && !deleteMouseTypeBtn._listenerAdded) {
+      deleteMouseTypeBtn.addEventListener('click', function() {
+        const select = itemRow.querySelector('.mouse-type');
+        if (select.selectedIndex > 0) {
+          select.remove(select.selectedIndex);
+          select.selectedIndex = 0;
+          alert('Mouse type deleted!');
+        } else {
+          alert('Please select a mouse type to delete.');
+        }
+      });
+      deleteMouseTypeBtn._listenerAdded = true;
+    }
+
+    // Keyboard Type Buttons
+    const addKeyboardTypeBtn = itemRow.querySelector('.add-keyboard-type-btn');
+    if (addKeyboardTypeBtn && !addKeyboardTypeBtn._listenerAdded) {
+      addKeyboardTypeBtn.addEventListener('click', function() {
+        const newType = prompt('Enter new keyboard type:');
+        if (newType && newType.trim() !== '') {
+          const select = itemRow.querySelector('.keyboard-type');
+          const option = document.createElement('option');
+          option.value = newType.trim().toLowerCase();
+          option.textContent = newType.trim();
+          select.appendChild(option);
+          alert('Keyboard type added!');
+        }
+      });
+      addKeyboardTypeBtn._listenerAdded = true;
+    }
+
+    const deleteKeyboardTypeBtn = itemRow.querySelector('.delete-keyboard-type-btn');
+    if (deleteKeyboardTypeBtn && !deleteKeyboardTypeBtn._listenerAdded) {
+      deleteKeyboardTypeBtn.addEventListener('click', function() {
+        const select = itemRow.querySelector('.keyboard-type');
+        if (select.selectedIndex > 0) {
+          select.remove(select.selectedIndex);
+          select.selectedIndex = 0;
+          alert('Keyboard type deleted!');
+        } else {
+          alert('Please select a keyboard type to delete.');
+        }
+      });
+      deleteKeyboardTypeBtn._listenerAdded = true;
+    }
+
+    // Keyboard Connection Buttons
+    const addKeyboardConnectionBtn = itemRow.querySelector('.add-keyboard-connection-btn');
+    if (addKeyboardConnectionBtn && !addKeyboardConnectionBtn._listenerAdded) {
+      addKeyboardConnectionBtn.addEventListener('click', function() {
+        const newConnection = prompt('Enter new keyboard connection:');
+        if (newConnection && newConnection.trim() !== '') {
+          const select = itemRow.querySelector('.keyboard-connection');
+          const option = document.createElement('option');
+          option.value = newConnection.trim().toLowerCase();
+          option.textContent = newConnection.trim();
+          select.appendChild(option);
+          alert('Keyboard connection added!');
+        }
+      });
+      addKeyboardConnectionBtn._listenerAdded = true;
+    }
+
+    const deleteKeyboardConnectionBtn = itemRow.querySelector('.delete-keyboard-connection-btn');
+    if (deleteKeyboardConnectionBtn && !deleteKeyboardConnectionBtn._listenerAdded) {
+      deleteKeyboardConnectionBtn.addEventListener('click', function() {
+        const select = itemRow.querySelector('.keyboard-connection');
+        if (select.selectedIndex > 0) {
+          select.remove(select.selectedIndex);
+          select.selectedIndex = 0;
+          alert('Keyboard connection deleted!');
+        } else {
+          alert('Please select a keyboard connection to delete.');
+        }
+      });
+      deleteKeyboardConnectionBtn._listenerAdded = true;
+    }
+
+    // Printer Type Buttons
+    const addPrinterTypeBtn = itemRow.querySelector('.add-printer-type-btn');
+    if (addPrinterTypeBtn && !addPrinterTypeBtn._listenerAdded) {
+      addPrinterTypeBtn.addEventListener('click', function() {
+        const newType = prompt('Enter new printer type:');
+        if (newType && newType.trim() !== '') {
+          const select = itemRow.querySelector('.printer-type');
+          const option = document.createElement('option');
+          option.value = newType.trim().toLowerCase();
+          option.textContent = newType.trim();
+          select.appendChild(option);
+          alert('Printer type added!');
+        }
+      });
+      addPrinterTypeBtn._listenerAdded = true;
+    }
+
+    const deletePrinterTypeBtn = itemRow.querySelector('.delete-printer-type-btn');
+    if (deletePrinterTypeBtn && !deletePrinterTypeBtn._listenerAdded) {
+      deletePrinterTypeBtn.addEventListener('click', function() {
+        const select = itemRow.querySelector('.printer-type');
+        if (select.selectedIndex > 0) {
+          select.remove(select.selectedIndex);
+          select.selectedIndex = 0;
+          alert('Printer type deleted!');
+        } else {
+          alert('Please select a printer type to delete.');
+        }
+      });
+      deletePrinterTypeBtn._listenerAdded = true;
+    }
+
+    // Printer Function Buttons
+    const addPrinterFunctionBtn = itemRow.querySelector('.add-printer-function-btn');
+    if (addPrinterFunctionBtn && !addPrinterFunctionBtn._listenerAdded) {
+      addPrinterFunctionBtn.addEventListener('click', function() {
+        const newFunction = prompt('Enter new printer function:');
+        if (newFunction && newFunction.trim() !== '') {
+          const select = itemRow.querySelector('.printer-function');
+          const option = document.createElement('option');
+          option.value = newFunction.trim().toLowerCase();
+          option.textContent = newFunction.trim();
+          select.appendChild(option);
+          alert('Printer function added!');
+        }
+      });
+      addPrinterFunctionBtn._listenerAdded = true;
+    }
+
+    const deletePrinterFunctionBtn = itemRow.querySelector('.delete-printer-function-btn');
+    if (deletePrinterFunctionBtn && !deletePrinterFunctionBtn._listenerAdded) {
+      deletePrinterFunctionBtn.addEventListener('click', function() {
+        const select = itemRow.querySelector('.printer-function');
+        if (select.selectedIndex > 0) {
+          select.remove(select.selectedIndex);
+          select.selectedIndex = 0;
+          alert('Printer function deleted!');
+        } else {
+          alert('Please select a printer function to delete.');
+        }
+      });
+      deletePrinterFunctionBtn._listenerAdded = true;
+    }
+
+    // Printer Connectivity Buttons
+    const addPrinterConnectivityBtn = itemRow.querySelector('.add-printer-connectivity-btn');
+    if (addPrinterConnectivityBtn && !addPrinterConnectivityBtn._listenerAdded) {
+      addPrinterConnectivityBtn.addEventListener('click', function() {
+        const newConnectivity = prompt('Enter new printer connectivity:');
+        if (newConnectivity && newConnectivity.trim() !== '') {
+          const select = itemRow.querySelector('.printer-connectivity');
+          const option = document.createElement('option');
+          option.value = newConnectivity.trim().toLowerCase();
+          option.textContent = newConnectivity.trim();
+          select.appendChild(option);
+          alert('Printer connectivity added!');
+        }
+      });
+      addPrinterConnectivityBtn._listenerAdded = true;
+    }
+
+    const deletePrinterConnectivityBtn = itemRow.querySelector('.delete-printer-connectivity-btn');
+    if (deletePrinterConnectivityBtn && !deletePrinterConnectivityBtn._listenerAdded) {
+      deletePrinterConnectivityBtn.addEventListener('click', function() {
+        const select = itemRow.querySelector('.printer-connectivity');
+        if (select.selectedIndex > 0) {
+          select.remove(select.selectedIndex);
+          select.selectedIndex = 0;
+          alert('Printer connectivity deleted!');
+        } else {
+          alert('Please select a printer connectivity to delete.');
+        }
+      });
+      deletePrinterConnectivityBtn._listenerAdded = true;
+    }
+    
+    const unitCostInputAmount = itemRow.querySelector('.unit-cost');
+    const quantityToProcureSpan = itemRow.querySelector('.quantity-to-procure');
+    const itemTotalAmountInput = itemRow.querySelector('.item-total-amount');
+    function updateItemTotalAmount() {
+      const unitCost = parseFloat(unitCostInputAmount.value) || 0;
+      const quantityToProcure = parseInt(quantityToProcureSpan?.textContent) || 0;
+      itemTotalAmountInput.value = (unitCost * quantityToProcure).toFixed(2);
+      updateSummary();
+
+    }
+    if (unitCostInputAmount && quantityToProcureSpan && itemTotalAmountInput) {
+      unitCostInputAmount.addEventListener('input', updateItemTotalAmount);
+      // Also update when quantity changes
+      const quantityInputAmount = itemRow.querySelector('.quantity');
+      if (quantityInputAmount) quantityInputAmount.addEventListener('input', updateItemTotalAmount);
+      // Also update when stock check runs
+      const observer = new MutationObserver(updateItemTotalAmount);
+      if (quantityToProcureSpan) observer.observe(quantityToProcureSpan, { childList: true });
+      updateItemTotalAmount();
+      
+      // Add event listener for favor-select to show/hide reason field
+      const favorSelect = itemRow.querySelector('.favor-select');
+      const favorReason = itemRow.querySelector('.favor-reason');
+      if (favorSelect && favorReason) {
+        favorSelect.addEventListener('change', function() {
+          const selectedValue = this.value;
+          if (selectedValue === 'Yes' || selectedValue === 'No') {
+            favorReason.style.display = 'block';
+            favorReason.required = true;
+            if (selectedValue === 'Yes') {
+              favorReason.placeholder = 'Why do you prefer this? Please provide a reason...';
+            } else {
+              favorReason.placeholder = 'Why do you not prefer this? Please provide a reason...';
+            }
+          } else {
+            favorReason.style.display = 'none';
+            favorReason.required = false;
+            favorReason.value = '';
+          }
+        });
+      }
+    }
+
+    // Add event listeners for asset type dropdown
+    const assetTypeDropdown = itemRow.querySelector('.asset-type-select');
+    if (assetTypeDropdown) {
+      assetTypeDropdown.addEventListener('change', function() {
+        const selectedType = this.value;
+        if (selectedType) {
+          selectAssetType(itemRow, selectedType);
+        } else {
+          // Clear asset type selection
+          itemRow.querySelector('.asset-type-id').value = '';
+          itemRow.querySelector('.asset-type-name').value = '';
+          // Hide all type-specific fields
+          itemRow.querySelectorAll('.laptop-fields, .mouse-fields, .keyboard-fields, .printer-fields, .system-fields').forEach(field => {
+            field.style.display = 'none';
+          });
+          // Clear stock info
+          const stockAvailable = itemRow.querySelector('.stock-available');
+          if (stockAvailable) stockAvailable.textContent = '0';
+          // Clear stock count display
+          const stockCountDisplay = itemRow.querySelector('.stock-count');
+          if (stockCountDisplay) stockCountDisplay.textContent = '-';
+        }
+      });
+    }
+    
+    // Add event listeners for "Use Stock" dropdown
+    const useStockDropdown = itemRow.querySelector('.use-stock-select');
+    if (useStockDropdown) {
+      useStockDropdown.addEventListener('change', function() {
+        const useStock = this.value;
+        const reasonSection = itemRow.querySelector('.stock-reason-section');
+        const stockCountDisplay = itemRow.querySelector('.stock-count');
+        const stockAvailable = itemRow.querySelector('.stock-available');
+        const quantityToProcure = itemRow.querySelector('.quantity-to-procure');
+        const quantity = parseInt(itemRow.querySelector('.quantity').value) || 0;
+        
+        if (useStock === 'No') {
+          // Show reason field
+          reasonSection.style.display = 'block';
+          // Set stock to 0
+          stockCountDisplay.textContent = '0';
+          if (stockAvailable) stockAvailable.textContent = '0';
+          // Set quantity to procure to full quantity
+          if (quantityToProcure) quantityToProcure.textContent = quantity;
+        } else {
+          // Hide reason field
+          reasonSection.style.display = 'none';
+          // Re-check stock if asset type is selected
+          const assetTypeId = itemRow.querySelector('.asset-type-id').value;
+          if (assetTypeId) {
+            checkStock(itemRow);
+          }
+        }
+      });
+    }
+  });
+}
+
+function selectAssetType(itemRow, assetType) {
+  // Use the assetTypeConfigs for configuration
+  const config = assetTypeConfigs[assetType.toLowerCase()];
+  
+  if (config) {
+    // Set hidden inputs
+    itemRow.querySelector('.asset-type-id').value = config.id;
+    itemRow.querySelector('.asset-type-name').value = config.name;
+    
+    // Hide all field sections
+    itemRow.querySelectorAll('.laptop-fields, .mouse-fields, .keyboard-fields, .printer-fields, .system-fields, .others-fields').forEach(field => {
+      field.style.display = 'none';
+    });
+    
+    // Show relevant fields
+    const fieldSection = itemRow.querySelector(`.${assetType}-fields`);
+    if (fieldSection) {
+      fieldSection.style.display = 'block';
+    }
+    
+    // Update required attributes
+    updateRequiredFields(itemRow, assetType);
+    
+    // Trigger stock check and update stock display
+    checkStock(itemRow);
+  }
+}
+
+function updateRequiredFields(itemRow, assetType) {
+  const config = assetTypeConfigs[assetType];
+  
+  // Reset all fields to not required
+  itemRow.querySelectorAll('input, select').forEach(field => {
+    if (!field.classList.contains('unit-cost') && !field.classList.contains('quantity') && 
+        !field.classList.contains('brand-select') && !field.classList.contains('vendor-select')) {
+      field.removeAttribute('required');
+    }
+  });
+  
+  // Set required fields based on asset type
+  config.requiredFields.forEach(fieldName => {
+    const field = itemRow.querySelector(`.${fieldName}`);
+    if (field) {
+      field.setAttribute('required', 'required');
+    }
+  });
+}
+
+function addItem() {
+  const container = document.getElementById('itemsContainer');
+  const template = document.getElementById('itemTemplate');
+  const clone = template.content.cloneNode(true);
+  
+  // Set unique ID for this item
+  const itemRow = clone.querySelector('.item-row');
+  itemRow.dataset.itemId = itemCounter++;
+  
+  // Initialize stock count display
+  const stockCountDisplay = itemRow.querySelector('.stock-count');
+  if (stockCountDisplay) {
+    stockCountDisplay.textContent = '-';
+  }
+  
+  container.appendChild(clone);
+  
+  // Ensure input fields are enabled and accessible
+  const unitCostInput = itemRow.querySelector('.unit-cost');
+  const quantityInput = itemRow.querySelector('.quantity');
+  
+  if (unitCostInput) {
+    unitCostInput.disabled = false;
+    unitCostInput.readOnly = false;
+    unitCostInput.style.pointerEvents = 'auto';
+    console.log('Unit cost input initialized:', unitCostInput);
+  }
+  
+  if (quantityInput) {
+    quantityInput.disabled = false;
+    quantityInput.readOnly = false;
+    quantityInput.style.pointerEvents = 'auto';
+    console.log('Quantity input initialized:', quantityInput);
+  }
+  
+  // Always initialize dropdowns and event listeners for all rows
+  initializeItemDropdowns();
+  enableAllInputFields(); // Ensure all input fields are enabled
+  updateSummary();
+}
+
+function removeItem(button) {
+  button.closest('.item-row').remove();
+  updateSummary();
+}
+
+// Function to update the PR items table
+function updatePRItemsTable() {
+  const tableBody = document.getElementById('prItemsTableBody');
+  const noItemsMessage = document.getElementById('noItemsMessage');
+  const table = document.getElementById('prItemsTable');
+  
+  // Clear existing table rows
+  tableBody.innerHTML = '';
+  
+  // Get all item rows
+  const itemRows = document.querySelectorAll('.item-row');
+  
+  if (itemRows.length === 0) {
+    // Show no items message
+    noItemsMessage.style.display = 'block';
+    table.style.display = 'none';
+    return;
+  }
+  
+  // Hide no items message and show table
+  noItemsMessage.style.display = 'none';
+  table.style.display = 'table';
+  
+  // Process each item row
+  itemRows.forEach((itemRow, index) => {
+    const assetTypeName = itemRow.querySelector('.asset-type-name').value;
+    const brand = itemRow.querySelector('.brand-select').value;
+    const vendor = itemRow.querySelector('.vendor-select').value;
+    const quantity = itemRow.querySelector('.quantity').value;
+    const stockAvailable = itemRow.querySelector('.stock-available')?.textContent || '0';
+    const quantityToProcure = itemRow.querySelector('.quantity-to-procure')?.textContent || '0';
+    const unitCost = itemRow.querySelector('.unit-cost').value;
+    const totalAmount = itemRow.querySelector('.item-total-amount').value;
+    const favor = itemRow.querySelector('.favor-select').value;
+    const favorReason = itemRow.querySelector('.favor-reason').value;
+    
+    // Get configuration based on asset type
+    let configuration = '';
+    if (assetTypeName.toLowerCase() === 'laptop') {
+      const processor = itemRow.querySelector('.processor')?.value || '';
+      const ram = itemRow.querySelector('.ram')?.value || '';
+      const rom = itemRow.querySelector('.rom')?.value || '';
+      if (processor || ram || rom) {
+        configuration = `processor: ${processor}, ram: ${ram}, rom: ${rom}`.replace(/,\s*$/, '');
+      }
+    } else if (assetTypeName.toLowerCase() === 'mouse') {
+      const mouseType = itemRow.querySelector('.mouse-type')?.value || '';
+      if (mouseType) {
+        configuration = `mouse-type: ${mouseType}`;
+      }
+    } else if (assetTypeName.toLowerCase() === 'keyboard') {
+      const keyboardType = itemRow.querySelector('.keyboard-type')?.value || '';
+      const keyboardConnection = itemRow.querySelector('.keyboard-connection')?.value || '';
+      if (keyboardType || keyboardConnection) {
+        configuration = `keyboard-type: ${keyboardType}, keyboard-connection: ${keyboardConnection}`.replace(/,\s*$/, '');
+      }
+    } else if (assetTypeName.toLowerCase() === 'system') {
+      const processor = itemRow.querySelector('.system-fields .processor')?.value || '';
+      const ram = itemRow.querySelector('.system-fields .ram')?.value || '';
+      const rom = itemRow.querySelector('.system-fields .rom')?.value || '';
+      if (processor || ram || rom) {
+        configuration = `processor: ${processor}, ram: ${ram}, rom: ${rom}`.replace(/,\s*$/, '');
+      }
+    }
+    
+    // Create table row
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td><span class="badge bg-primary">${assetTypeName || 'Not Selected'}</span></td>
+      <td>${brand || 'Not Selected'}</td>
+      <td>${vendor || 'Not Selected'}</td>
+      <td><small class="text-muted">${configuration || 'N/A'}</small></td>
+      <td>${quantity || '0'}</td>
+      <td>
+        <span class="badge bg-${parseInt(stockAvailable) >= parseInt(quantity) ? 'success' : 'warning'}">${stockAvailable}</span>
+        <br><small class="text-muted">Use: ${itemRow.querySelector('.use-stock-select').value}</small>
+        ${itemRow.querySelector('.use-stock-select').value === 'No' && itemRow.querySelector('.stock-reason').value ? `<br><small class="text-danger">Reason: ${itemRow.querySelector('.stock-reason').value}</small>` : ''}
+      </td>
+      <td><span class="badge bg-info">${quantityToProcure}</span></td>
+      <td>₹${unitCost || '0.00'}</td>
+      <td><strong>₹${totalAmount || '0.00'}</strong></td>
+      <td>
+        <span class="badge bg-${favor === 'Yes' ? 'success' : favor === 'No' ? 'danger' : 'secondary'}">
+          ${favor || 'Not Selected'}
+        </span>
+      </td>
+      <td><small class="text-muted">${favorReason || 'N/A'}</small></td>
+      <td>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeItemFromTable(this, ${itemRow.dataset.itemId})">
+          <i class="bi bi-trash"></i>
+        </button>
+      </td>
+    `;
+    
+    tableBody.appendChild(row);
+  });
+}
+
+// Function to show PR preview
+function showPRPreview() {
+  const itemRows = document.querySelectorAll('.item-row');
+  
+  if (itemRows.length === 0) {
+    alert('Please add at least one item to the PR before previewing.');
+    return;
+  }
+  
+  // Validate required fields
+  const justification = document.getElementById('justification').value.trim();
+  const approver = document.getElementById('approver').value;
+  const fromField = document.getElementById('from_field').value.trim();
+  
+  if (!justification) {
+    alert('Please provide a reason for the PR.');
+    return;
+  }
+  
+  if (!approver) {
+    alert('Please select an approver for the PR.');
+    return;
+  }
+  
+  if (!fromField) {
+    alert('Please enter the "From" field.');
+    return;
+  }
+  
+  // Populate preview table
+  populatePreviewTable();
+  
+  // Update preview summary
+  updatePreviewSummary();
+  
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('prPreviewModal'));
+  modal.show();
+}
+
+// Function to populate preview table
+function populatePreviewTable() {
+  const tableBody = document.getElementById('prPreviewTableBody');
+  const noItemsMessage = document.getElementById('noItemsPreviewMessage');
+  
+  // Populate PR information fields
+  const fromField = document.getElementById('from_field').value.trim();
+  const justification = document.getElementById('justification').value.trim();
+  
+  document.getElementById('previewFromField').textContent = fromField || 'Not specified';
+  document.getElementById('previewJustification').textContent = justification || 'Not specified';
+  
+  // Clear existing rows
+  tableBody.innerHTML = '';
+  
+  // Get all item rows
+  const itemRows = document.querySelectorAll('.item-row');
+  
+  if (itemRows.length === 0) {
+    noItemsMessage.style.display = 'block';
+    return;
+  }
+  
+  noItemsMessage.style.display = 'none';
+  
+  // Process each item row
+  itemRows.forEach((itemRow, index) => {
+    const assetTypeName = itemRow.querySelector('.asset-type-name').value;
+    const brand = itemRow.querySelector('.brand-select').value;
+    const vendor = itemRow.querySelector('.vendor-select').value;
+    const quantity = itemRow.querySelector('.quantity').value;
+    const stockAvailable = itemRow.querySelector('.stock-available')?.textContent || '0';
+    const quantityToProcure = itemRow.querySelector('.quantity-to-procure')?.textContent || '0';
+    const unitCost = itemRow.querySelector('.unit-cost').value;
+    const totalAmount = itemRow.querySelector('.item-total-amount').value;
+    const favor = itemRow.querySelector('.favor-select').value;
+    const favorReason = itemRow.querySelector('.favor-reason').value;
+    
+    // Get configuration based on asset type
+    let configuration = '';
+    if (assetTypeName.toLowerCase() === 'laptop') {
+      const processor = itemRow.querySelector('.processor')?.value || '';
+      const ram = itemRow.querySelector('.ram')?.value || '';
+      const rom = itemRow.querySelector('.rom')?.value || '';
+      if (processor || ram || rom) {
+        configuration = `processor: ${processor}, ram: ${ram}, rom: ${rom}`.replace(/,\s*$/, '');
+      }
+    } else if (assetTypeName.toLowerCase() === 'mouse') {
+      const mouseType = itemRow.querySelector('.mouse-type')?.value || '';
+      if (mouseType) {
+        configuration = `mouse-type: ${mouseType}`;
+      }
+    } else if (assetTypeName.toLowerCase() === 'keyboard') {
+      const keyboardType = itemRow.querySelector('.keyboard-type')?.value || '';
+      const keyboardConnection = itemRow.querySelector('.keyboard-connection')?.value || '';
+      if (keyboardType || keyboardConnection) {
+        configuration = `keyboard-type: ${keyboardType}, keyboard-connection: ${keyboardConnection}`.replace(/,\s*$/, '');
+      }
+    } else if (assetTypeName.toLowerCase() === 'system') {
+      const processor = itemRow.querySelector('.system-fields .processor')?.value || '';
+      const ram = itemRow.querySelector('.system-fields .ram')?.value || '';
+      const rom = itemRow.querySelector('.system-fields .rom')?.value || '';
+      if (processor || ram || rom) {
+        configuration = `processor: ${processor}, ram: ${ram}, rom: ${rom}`.replace(/,\s*$/, '');
+      }
+    }
+    
+    // Calculate system recommendation based on cost
+    const totalAmountValue = parseFloat(totalAmount) || 0;
+    let systemRecommendation = 'No';
+    let systemRecommendationReason = '';
+    
+    // System recommendation logic based on cost thresholds
+    if (assetTypeName.toLowerCase() === 'laptop') {
+      if (totalAmountValue <= 30000) {
+        systemRecommendation = 'Yes';
+        systemRecommendationReason = 'Low cost - good value for money';
+      } else if (totalAmountValue <= 50000) {
+        systemRecommendation = 'Maybe';
+        systemRecommendationReason = 'Moderate cost - acceptable for performance';
+      } else {
+        systemRecommendation = 'No';
+        systemRecommendationReason = 'High cost - consider lower spec alternatives';
+      }
+    } else if (assetTypeName.toLowerCase() === 'mouse') {
+      if (totalAmountValue <= 1000) {
+        systemRecommendation = 'Yes';
+        systemRecommendationReason = 'Low cost - good value';
+      } else if (totalAmountValue <= 2000) {
+        systemRecommendation = 'Maybe';
+        systemRecommendationReason = 'Moderate cost - acceptable';
+      } else {
+        systemRecommendation = 'No';
+        systemRecommendationReason = 'High cost for mouse - consider wired option';
+      }
+    } else if (assetTypeName.toLowerCase() === 'keyboard') {
+      if (totalAmountValue <= 2000) {
+        systemRecommendation = 'Yes';
+        systemRecommendationReason = 'Low cost - good value';
+      } else if (totalAmountValue <= 5000) {
+        systemRecommendation = 'Maybe';
+        systemRecommendationReason = 'Moderate cost - acceptable';
+      } else {
+        systemRecommendation = 'No';
+        systemRecommendationReason = 'High cost for keyboard - consider membrane option';
+      }
+    } else {
+      // For other asset types
+      if (totalAmountValue <= 5000) {
+        systemRecommendation = 'Yes';
+        systemRecommendationReason = 'Low cost - good value';
+      } else if (totalAmountValue <= 10000) {
+        systemRecommendation = 'Maybe';
+        systemRecommendationReason = 'Moderate cost - acceptable';
+      } else {
+        systemRecommendation = 'No';
+        systemRecommendationReason = 'High cost - consider alternatives';
+      }
+    }
+    
+    // Create table row
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td><span class="badge bg-primary">${assetTypeName || 'Not Selected'}</span></td>
+      <td>${brand || 'Not Selected'}</td>
+      <td>${vendor || 'Not Selected'}</td>
+      <td><small class="text-muted">${configuration || 'N/A'}</small></td>
+      <td>${quantity || '0'}</td>
+      <td>
+        <span class="badge bg-${parseInt(stockAvailable) >= parseInt(quantity) ? 'success' : 'warning'}">${stockAvailable}</span>
+        <br><small class="text-muted">Use: ${itemRow.querySelector('.use-stock-select').value}</small>
+        ${itemRow.querySelector('.use-stock-select').value === 'No' && itemRow.querySelector('.stock-reason').value ? `<br><small class="text-danger">Reason: ${itemRow.querySelector('.stock-reason').value}</small>` : ''}
+      </td>
+      <td><span class="badge bg-info">${quantityToProcure}</span></td>
+      <td>₹${unitCost || '0.00'}</td>
+      <td><strong>₹${totalAmount || '0.00'}</strong></td>
+      <td>
+        <span class="badge bg-${favor === 'Yes' ? 'success' : favor === 'No' ? 'danger' : 'secondary'}">
+          ${favor || 'Not Selected'}
+        </span>
+      </td>
+      <td><small class="text-muted">${favorReason || 'N/A'}</small></td>
+      <td>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeItemFromTable(this, ${itemRow.dataset.itemId})">
+          <i class="bi bi-trash"></i>
+        </button>
+      </td>
+    `;
+    
+    tableBody.appendChild(row);
+  });
+}
+
+// Function to update preview summary
+function updatePreviewSummary() {
+  const itemRows = document.querySelectorAll('.item-row');
+  let totalItems = 0;
+  let totalQuantity = 0;
+  let totalAmount = 0;
+  let totalQuantityToProcure = 0;
+  let recommendedItems = [];
+  
+  itemRows.forEach(itemRow => {
+    totalItems++;
+    totalQuantity += parseInt(itemRow.querySelector('.quantity').value) || 0;
+    totalAmount += parseFloat(itemRow.querySelector('.item-total-amount').value) || 0;
+    totalQuantityToProcure += parseInt(itemRow.querySelector('.quantity-to-procure')?.textContent) || 0;
+    
+    // Check if this item is recommended
+    const favor = itemRow.querySelector('.favor-select').value;
+    if (favor === 'Yes') {
+      const assetTypeName = itemRow.querySelector('.asset-type-name').value;
+      const brand = itemRow.querySelector('.brand-select').value;
+      const vendor = itemRow.querySelector('.vendor-select').value;
+      const quantity = itemRow.querySelector('.quantity').value;
+      const unitCost = itemRow.querySelector('.unit-cost').value;
+      const totalItemAmount = itemRow.querySelector('.item-total-amount').value;
+      const favorReason = itemRow.querySelector('.favor-reason').value;
+      
+      // Get configuration details
+      let configuration = '';
+      if (assetTypeName.toLowerCase() === 'laptop') {
+        const processor = itemRow.querySelector('.processor')?.value || '';
+        const ram = itemRow.querySelector('.ram')?.value || '';
+        const rom = itemRow.querySelector('.rom')?.value || '';
+        if (processor || ram || rom) {
+          configuration = `Processor: ${processor}, RAM: ${ram}, Storage: ${rom}`;
+        }
+      } else if (assetTypeName.toLowerCase() === 'mouse') {
+        const mouseType = itemRow.querySelector('.mouse-type')?.value || '';
+        if (mouseType) {
+          configuration = `Type: ${mouseType}`;
+        }
+      } else if (assetTypeName.toLowerCase() === 'keyboard') {
+        const keyboardType = itemRow.querySelector('.keyboard-type')?.value || '';
+        const keyboardConnection = itemRow.querySelector('.keyboard-connection')?.value || '';
+        if (keyboardType || keyboardConnection) {
+          configuration = `Type: ${keyboardType}, Connection: ${keyboardConnection}`;
+        }
+      } else if (assetTypeName.toLowerCase() === 'system') {
+        const processor = itemRow.querySelector('.system-fields .processor')?.value || '';
+        const ram = itemRow.querySelector('.system-fields .ram')?.value || '';
+        const rom = itemRow.querySelector('.system-fields .rom')?.value || '';
+        if (processor || ram || rom) {
+          configuration = `Processor: ${processor}, RAM: ${ram}, Storage: ${rom}`;
+        }
+      }
+      
+      recommendedItems.push({
+        assetType: assetTypeName,
+        brand: brand,
+        vendor: vendor,
+        quantity: quantity,
+        unitCost: unitCost,
+        totalAmount: totalItemAmount,
+        configuration: configuration,
+        reason: favorReason
+      });
+    }
+  });
+  
+
+  
+  // Update recommended items summary
+  updateRecommendedItemsSummary(recommendedItems);
+}
+
+// Function to update recommended items summary
+function updateRecommendedItemsSummary(recommendedItems) {
+  const summaryDiv = document.getElementById('recommendedItemsSummary');
+  
+  if (recommendedItems.length === 0) {
+    summaryDiv.innerHTML = '<p class="text-muted">No recommended items found.</p>';
+    return;
+  }
+  
+  let summaryHtml = `
+    <div class="row">
+      <div class="col-12">
+        <p class="text-success mb-3">
+          <strong>${recommendedItems.length} item(s) marked as recommended:</strong>
+        </p>
+      </div>
+    </div>
+  `;
+  
+  recommendedItems.forEach((item, index) => {
+    summaryHtml += `
+      <div class="recommended-item-card mb-3 p-3 border border-success rounded">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="text-primary">Item ${index + 1}: ${item.assetType}</h6>
+            <ul class="list-unstyled">
+              <li><strong>Brand:</strong> ${item.brand}</li>
+              <li><strong>Vendor:</strong> ${item.vendor}</li>
+              <li><strong>Quantity:</strong> ${item.quantity}</li>
+              <li><strong>Unit Cost:</strong> ₹${item.unitCost}</li>
+              <li><strong>Total Amount:</strong> ₹${item.totalAmount}</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-success">Specifications:</h6>
+            <p class="text-muted">${item.configuration || 'No specific configuration'}</p>
+            <h6 class="text-info">Recommendation Reason:</h6>
+            <p class="text-muted">${item.reason || 'No reason provided'}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  summaryHtml += `
+    <div class="row mt-3">
+      <div class="col-12">
+        <div class="alert alert-success">
+          <strong>Total Recommended Items Value:</strong> ₹${recommendedItems.reduce((sum, item) => sum + parseFloat(item.totalAmount), 0).toFixed(2)}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  summaryDiv.innerHTML = summaryHtml;
+}
+
+// Function to confirm and create PR
+function confirmCreatePR() {
+  // Hide the modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('prPreviewModal'));
+  modal.hide();
+  
+  // Trigger form submission directly
+  const form = document.getElementById('prForm');
+  if (form) {
+    // Create and dispatch a submit event
+    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+    form.dispatchEvent(submitEvent);
+  }
+}
+
+
+
+
+
+// Function to remove item from table and form
+function removeItemFromTable(button, itemId) {
+  // Find the corresponding item row in the form
+  const itemRow = document.querySelector(`.item-row[data-item-id="${itemId}"]`);
+  if (itemRow) {
+    itemRow.remove();
+    updateSummary();
+    updatePRItemsTable();
+  }
+}
+
+function validateStockAvailability(itemRow) {
+  const quantity = parseInt(itemRow.querySelector('.quantity').value) || 0;
+  const stockAvailable = parseInt(itemRow.querySelector('.stock-available')?.textContent) || 0;
+  const useStock = itemRow.querySelector('.use-stock-select').value;
+  
+  // Only validate if "Use Stock" is "Yes" and stock is available
+  if (useStock === 'Yes' && stockAvailable > 0 && quantity > 0 && quantity <= stockAvailable) {
+    // Show confirmation popup
+    const confirmed = confirm(`Do you still need to raise the PR because stock already has ${stockAvailable} units available?\n\nQuantity requested: ${quantity}\nStock available: ${stockAvailable}\n\nClick OK to continue with reason, or Cancel to modify quantity.`);
+    
+    if (confirmed) {
+      // Show reason input
+      const reason = prompt('Please provide a reason for raising PR despite available stock:');
+      if (reason && reason.trim() !== '') {
+        // Set "Use Stock" to "No" and add the reason
+        itemRow.querySelector('.use-stock-select').value = 'No';
+        itemRow.querySelector('.stock-reason').value = reason.trim();
+        itemRow.querySelector('.stock-reason-section').style.display = 'block';
+        
+        // Update stock display to show 0 (not using stock)
+        itemRow.querySelector('.stock-count').textContent = '0';
+        // Update both top and bottom quantity to procure displays
+        const allQuantityDisplays = itemRow.querySelectorAll('.quantity-to-procure');
+        allQuantityDisplays.forEach(display => {
+          display.textContent = quantity;
+        });
+        itemRow.querySelector('.stock-info').className = 'alert alert-warning stock-info';
+        
+        // Show success message
+        alert('PR item added with reason. Stock will not be used for this item.');
+      } else {
+        // User cancelled or didn't provide reason
+        alert('Reason is required. Please provide a reason or modify the quantity.');
+        itemRow.querySelector('.quantity').focus();
+      }
+    } else {
+      // User cancelled - reset quantity or let them modify
+      itemRow.querySelector('.quantity').focus();
+    }
+  }
+}
+
+function checkStock(itemRow) {
+  const assetTypeId = itemRow.querySelector('.asset-type-id').value;
+  const quantity = parseInt(itemRow.querySelector('.quantity').value) || 0;
+  const stockInfo = itemRow.querySelector('.stock-info');
+  const stockAvailable = itemRow.querySelector('.stock-available');
+  const quantityToProcure = itemRow.querySelector('.quantity-to-procure');
+  const stockCountDisplay = itemRow.querySelector('.stock-count');
+  const useStock = itemRow.querySelector('.use-stock-select').value;
+  const errorMsgId = 'stock-error-msg';
+  let errorMsg = itemRow.querySelector(`#${errorMsgId}`);
+  if (!errorMsg) {
+    errorMsg = document.createElement('div');
+    errorMsg.id = errorMsgId;
+    errorMsg.className = 'text-danger mt-1';
+    stockInfo.parentNode.appendChild(errorMsg);
+  }
+  errorMsg.textContent = '';
+  
+  // Helper function to update all quantity to procure displays
+  function updateQuantityToProcure(value) {
+    // Update both top and bottom displays
+    const allQuantityDisplays = itemRow.querySelectorAll('.quantity-to-procure');
+    allQuantityDisplays.forEach(display => {
+      display.textContent = value;
+    });
+  }
+  
+  // If "Use Stock" is set to "No", force stock to 0
+  if (useStock === 'No') {
+    stockAvailable.textContent = '0';
+    stockCountDisplay.textContent = '0';
+    updateQuantityToProcure(quantity);
+    stockInfo.className = 'alert alert-warning stock-info';
+    errorMsg.textContent = '';
+    return;
+  }
+  
+  // Check if asset type is selected and valid
+  if (assetTypeId && assetTypeId !== '' && !isNaN(parseInt(assetTypeId))) {
+    fetch(`/api/stock_check?asset_type_id=${assetTypeId}`)
+      .then(r => {
+        return r.json().then(data => ({ status: r.status, data: data }));
+      })
+      .then(({ status, data }) => {
+        if (status === 200 && data.success) {
+          const stockCount = data.stock_available;
+          stockAvailable.textContent = stockCount;
+          stockCountDisplay.textContent = stockCount;
+          const toProcure = Math.max(0, quantity - stockCount);
+          updateQuantityToProcure(toProcure);
+          stockInfo.className = stockCount >= quantity ? 'alert alert-success stock-info' : 'alert alert-warning stock-info';
+          errorMsg.textContent = '';
+        } else {
+          // Handle API errors gracefully
+          stockAvailable.textContent = 0;
+          stockCountDisplay.textContent = '0';
+          updateQuantityToProcure(quantity);
+          stockInfo.className = 'alert alert-warning stock-info';
+          errorMsg.textContent = 'Stock check failed: ' + (data.error || 'Unknown error');
+        }
+      })
+      .catch((err) => {
+        stockAvailable.textContent = 0;
+        stockCountDisplay.textContent = '0';
+        updateQuantityToProcure(quantity);
+        stockInfo.className = 'alert alert-warning stock-info';
+        errorMsg.textContent = 'Stock check error: ' + err.message;
+      });
+  } else {
+    stockAvailable.textContent = 0;
+    stockCountDisplay.textContent = '-';
+    updateQuantityToProcure(quantity);
+    stockInfo.className = 'alert alert-info stock-info';
+    errorMsg.textContent = 'Please select an asset type.';
+  }
+}
+
+function updateSummary() {
+  const items = document.querySelectorAll('.item-row');
+  let totalItems = items.length;
+  let totalQuantity = 0;
+  let totalAmount = 0;
+  let totalQuantityToProcure = 0;
+
+  items.forEach(item => {
+    const quantity = parseInt(item.querySelector('.quantity').value) || 0;
+    const unitCost = parseFloat(item.querySelector('.unit-cost').value) || 0;
+    const itemTotalAmount = parseFloat(item.querySelector('.item-total-amount').value) || 0;
+    const quantityToProcure = parseInt(item.querySelector('.quantity-to-procure')?.textContent) || 0;
+    totalQuantity += quantity;
+    totalAmount += itemTotalAmount;
+    totalQuantityToProcure += quantityToProcure;
+  });
+
+  document.getElementById('totalItems').textContent = totalItems;
+  document.getElementById('totalQuantity').textContent = totalQuantity;
+  document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+  document.getElementById('totalQuantityToProcure').textContent = totalQuantityToProcure;
+}
+
+// Form submission
+document.getElementById('prForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // Validate required fields
+  const justification = document.getElementById('justification').value.trim();
+  const approverEmail = document.getElementById('approver').value.trim();
+  const fromField = document.getElementById('from_field').value.trim();
+  
+  if (!justification) {
+    alert('Please enter a reason for the purchase request.');
+    return;
+  }
+  
+  if (!approverEmail) {
+    alert('Please select an approver.');
+    return;
+  }
+  
+  if (!fromField) {
+    alert('Please enter the "From" field.');
+    return;
+  }
+  
+  const items = [];
+  document.querySelectorAll('.item-row').forEach(itemRow => {
+    const assetTypeId = parseInt(itemRow.querySelector('.asset-type-id').value);
+    const assetTypeName = itemRow.querySelector('.asset-type-name').value;
+    const brand = itemRow.querySelector('.brand-select').value;
+    const vendor = itemRow.querySelector('.vendor-select').value;
+    const unitCost = parseFloat(itemRow.querySelector('.unit-cost').value);
+    const quantity = parseInt(itemRow.querySelector('.quantity').value);
+    const stockAvailable = itemRow.querySelector('.stock-available')?.textContent.trim() || '';
+    const favor = itemRow.querySelector('.favor-select')?.value.trim() || '';
+    const favorReason = itemRow.querySelector('.favor-reason')?.value.trim() || '';
+    const useStock = itemRow.querySelector('.use-stock-select')?.value.trim() || 'Yes';
+    const stockReason = itemRow.querySelector('.stock-reason')?.value.trim() || '';
+    
+    if (!assetTypeId || isNaN(assetTypeId) || !brand || !vendor || !unitCost || !quantity || !favor) {
+      alert('Please fill in all required item fields (Asset Type, Brand, Vendor, Unit Cost, Quantity, Recommended).');
+      return;
+    }
+    
+    // Validate favor reason if favor is selected
+    if (favor && !favorReason) {
+      alert('Please provide a reason for your recommendation.');
+      return;
+    }
+    
+    // Validate stock reason if use stock is "No"
+    if (useStock === 'No' && !stockReason) {
+      alert('Please provide a reason for not using available stock.');
+      return;
+    }
+    
+    // Get asset type specific fields
+    const config = assetTypeConfigs[assetTypeName.toLowerCase()];
+    let configuration = '';
+    let additionalFields = {};
+    
+    if (config) {
+      config.fields.forEach(fieldName => {
+        const field = itemRow.querySelector(`.${fieldName}`);
+        if (field) {
+          const value = field.value.trim();
+          if (value) {
+            additionalFields[fieldName] = value;
+            configuration += `${fieldName}: ${value}, `;
+          }
+        }
+      });
+    }
+    
+    // Remove trailing comma and space
+    configuration = configuration.replace(/,\s*$/, '');
+    
+    const quantityToProcure = itemRow.querySelector('.quantity-to-procure')?.textContent.trim() || '';
+    const totalAmount = (
+      (parseFloat(unitCost) || 0) * (parseInt(quantityToProcure) || 0)
+    ).toFixed(2);
+    
+
+    
+    items.push({
+      asset_type_id: assetTypeId,
+      asset_type_name: assetTypeName,
+      brand: brand,
+      vendor: vendor,
+      stock_available: stockAvailable,
+      quantity_to_procure: quantityToProcure,
+      total_amount: totalAmount,
+      configuration: configuration,
+      unit_cost: unitCost,
+      quantity_required: quantity,
+      favor: favor,  // Add FAVOR to main item data
+      favor_reason: favorReason,  // Add favor reason to main item data
+      use_stock: useStock,  // Add use stock setting
+      stock_reason: stockReason,  // Add stock reason
+      additional_fields: additionalFields
+    });
+  });
+  
+  if (items.length === 0) {
+    alert('Please add at least one item to the purchase request.');
+    return;
+  }
+  
+  const formData = {
+    requested_by: 1, // Current user ID (should be from session)
+    approver_email: approverEmail,
+    justification: justification,
+    from_field: fromField,
+    items: items
+  };
+  
+  console.log('Submitting PR with data:', formData);
+  
+  // Show loading state
+  const submitBtn = document.getElementById('submitPRBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating PR...';
+  }
+  
+  // Submit PR
+  fetch('/api/purchase_requests', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formData)
+  })
+  .then(response => {
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+    
+    if (!response.ok) {
+      // If response is not ok, try to get the text to see what error we're getting
+      return response.text().then(text => {
+        console.log('Error response text:', text);
+        throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
+      });
+    }
+    
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return response.text().then(text => {
+        console.log('Non-JSON response:', text);
+        throw new Error('Server returned HTML instead of JSON. Check if you are logged in.');
+      });
+    }
+    
+    return response.json();
+  })
+  .then(data => {
+    console.log('API Response:', data);
+    
+    // Reset button state
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-send"></i> Create PR (and send approval email)';
+    }
+    
+    if (data.success) {
+      alert('Purchase request created successfully! PR Number: ' + data.pr_number);
+      // Redirect to approval screen with success parameters
+      window.location.href = `/procurement/approvals?success=true&pr_created=${data.pr_number}`;
+    } else {
+      alert('Error creating PR: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('PR submission error:', error);
+    
+    // Reset button state
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-send"></i> Create PR (and send approval email)';
+    }
+    
+    alert('Error submitting PR: ' + error.message);
+  });
+});
+</script>
+{% endblock %} 

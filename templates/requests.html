@@ -28,6 +28,7 @@
             <td>{{ req.created_at }}</td>
             <td>
                 <form method="POST" style="display:inline-block">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="request_id" value="{{ req.id }}">
                     {% if req.status == 'pending' %}
                         <button name="action" value="approve" class="btn btn-success btn-sm">Approve</button>

@@ -7,15 +7,178 @@
       <form method="POST">
         {{ form.hidden_tag() }}
         <div class="row">
+          <div class="col-md-2 mb-2">{{ form.asset_number.label(class="form-label") }}{{ form.asset_number(class="form-control") }}</div>
           <div class="col-md-2 mb-2">{{ form.serial_number.label(class="form-label") }}{{ form.serial_number(class="form-control") }}</div>
           <div class="col-md-2 mb-2">{{ form.brand.label(class="form-label") }}{{ form.brand(class="form-control") }}</div>
           <div class="col-md-2 mb-2">{{ form.model.label(class="form-label") }}{{ form.model(class="form-control") }}</div>
+          <div class="col-md-2 mb-2">{{ form.invoice_number.label(class="form-label") }}{{ form.invoice_number(class="form-control") }}</div>
+          <div class="col-md-2 mb-2">{{ form.ram.label(class="form-label") }}{{ form.ram(class="form-control") }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-2 mb-2">{{ form.rom.label(class="form-label") }}{{ form.rom(class="form-control") }}</div>
+        <div class="row">
           <div class="col-md-2 mb-2">{{ form.purchase_date.label(class="form-label") }}{{ form.purchase_date(class="form-control") }}</div>
           <div class="col-md-2 mb-2">{{ form.warranty_expiry.label(class="form-label") }}{{ form.warranty_expiry(class="form-control") }}</div>
+          <div class="col-md-2 mb-2">
+            {{ form.asset_type.label(class="form-label") }}
+            <div class="custom-dropdown" id="custom-asset-type-dropdown">
+              <button class="btn btn-light dropdown-toggle w-100" type="button" id="assetTypeDropdownBtn" aria-expanded="false">
+                <span id="selectedAssetType">{{ asset.asset_type or 'Asset' }}</span>
+              </button>
+              <ul class="dropdown-menu w-100" id="assetTypeDropdownMenu" aria-labelledby="assetTypeDropdownBtn">
+                <!-- Asset types will be loaded here -->
+              </ul>
+              <input type="hidden" name="asset_type" id="asset_type_hidden" value="{{ asset.asset_type or '' }}">
+              <button type="button" class="btn btn-outline-secondary mt-1 w-100 d-flex align-items-center justify-content-center" id="add-asset-type-btn" title="Add new asset type"><i class="bi bi-plus me-2"></i> Add Asset</button>
+            </div>
+          </div>
           <div class="col-md-2 mb-2 d-flex align-items-end">{{ form.submit(class="btn btn-primary w-100") }}</div>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<style>
+.custom-dropdown { position: relative; }
+.custom-dropdown .dropdown-menu { max-height: 200px; overflow-y: auto; }
+.custom-dropdown .delete-type-btn { color: #dc3545; background: none; border: none; font-size: 1rem; margin-left: 8px; cursor: pointer; }
+.custom-dropdown .delete-type-btn:hover { color: #a71d2a; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function loadAssetTypesDropdown() {
+    fetch('/api/asset_types')
+      .then(r => r.json())
+      .then(data => {
+        const menu = document.getElementById('assetTypeDropdownMenu');
+        menu.innerHTML = '';
+        
+        if (data.types && data.types.length > 0) {
+        data.types.forEach(function(type) {
+            const li = document.createElement('li');
+            li.className = 'dropdown-item d-flex justify-content-between align-items-center';
+            li.style.cursor = 'pointer';
+            
+            const span = document.createElement('span');
+            span.textContent = type.name;
+            span.onclick = function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              document.getElementById('selectedAssetType').textContent = type.name;
+              document.getElementById('asset_type_hidden').value = type.name;
+              // Close dropdown manually
+              const menu = document.getElementById('assetTypeDropdownMenu');
+              menu.style.display = 'none';
+            };
+            li.appendChild(span);
+            
+            // Add delete button for asset types
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn btn-sm btn-danger ms-2 py-0 px-2 delete-type-btn';
+            deleteBtn.title = 'Delete this asset type';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.onclick = function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (confirm('Are you sure you want to delete this asset type?')) {
+                fetch(`/api/asset_types/${type.name}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  }
+                })
+                .then(r => r.json())
+                .then(result => {
+                  if (result.success) {
+                    li.remove();
+                    if (document.getElementById('asset_type_hidden').value === type.name) {
+                      document.getElementById('selectedAssetType').textContent = 'Asset';
+                      document.getElementById('asset_type_hidden').value = '';
+                    }
+                  } else {
+                    alert('Error deleting asset type: ' + result.error);
+                  }
+                });
+            }
+          };
+            li.appendChild(deleteBtn);
+            menu.appendChild(li);
+          });
+        }
+      });
+  }
+
+  // Add Asset Type button functionality
+  const addAssetTypeBtn = document.getElementById('add-asset-type-btn');
+  if (addAssetTypeBtn) {
+    addAssetTypeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const newType = prompt('Enter new asset type:');
+      if (newType && newType.trim() !== '') {
+        fetch('/api/asset_types', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: newType.trim() })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            // Reload the dropdown to include the new type
+            loadAssetTypesDropdown();
+            // Select the new type
+            document.getElementById('selectedAssetType').textContent = newType.trim();
+            document.getElementById('asset_type_hidden').value = newType.trim();
+            alert('Asset type added successfully!');
+          } else {
+            alert('Error adding asset type: ' + data.error);
+          }
+        });
+      }
+    });
+  }
+
+  // Ensure dropdown button works properly
+  const assetTypeDropdownBtn = document.getElementById('assetTypeDropdownBtn');
+  if (assetTypeDropdownBtn) {
+    // Simple click handler for dropdown
+    assetTypeDropdownBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      // Toggle dropdown manually
+      const menu = document.getElementById('assetTypeDropdownMenu');
+      if (menu.style.display === 'block' || menu.style.display === '') {
+        menu.style.display = 'none';
+      } else {
+        menu.style.display = 'block';
+        // Ensure menu is positioned correctly
+        menu.style.position = 'absolute';
+        menu.style.top = '100%';
+        menu.style.left = '0';
+        menu.style.zIndex = '1050';
+        menu.style.backgroundColor = 'white';
+        menu.style.border = '1px solid #ccc';
+        menu.style.borderRadius = '4px';
+        menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      }
+    });
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('custom-asset-type-dropdown');
+    if (!dropdown.contains(e.target)) {
+      document.getElementById('assetTypeDropdownMenu').style.display = 'none';
+    }
+  });
+
+  // Load asset types on page load
+  loadAssetTypesDropdown();
+});
+</script>
 {% endblock %} 

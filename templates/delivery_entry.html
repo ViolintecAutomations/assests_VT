@@ -1,0 +1,915 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="mb-4">Record Delivery</h2>
+      
+      <form id="deliveryForm">
+        <!-- PO Selection -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Purchase Order Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="poCombo" class="form-label">Select Purchase Order</label>
+                  <input class="form-control" id="poCombo" list="poOptions" placeholder="Type to search PO/PR/vendor" autocomplete="off" required>
+                  <datalist id="poOptions"></datalist>
+                  <!-- Hidden field holds selected PO ID for form submit and code reuse -->
+                  <input type="hidden" id="poSelect" name="po_id" value="">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="deliveryDate" class="form-label">Delivery Date</label>
+                  <input type="date" class="form-control" id="deliveryDate" name="delivery_date" required>
+                </div>
+              </div>
+            </div>
+            
+            <!-- PO Details Display -->
+            <div id="poDetails" class="mt-3" style="display: none;">
+              <div class="alert alert-info">
+                <h6>PO Information:</h6>
+                <div id="poInfo"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Details -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Delivery Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="quantityReceived" class="form-label">Quantity Received</label>
+                  <input type="number" class="form-control" id="quantityReceived" name="quantity_received" min="1" required>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="raisedQuantity" class="form-label">Raised Quantity to Procure</label>
+                  <input type="number" class="form-control" id="raisedQuantity" name="raised_quantity" readonly>
+                  <small class="form-text text-muted">Total approved quantity for procurement</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="pendingDelivery" class="form-label">Pending Delivery</label>
+                  <input type="number" class="form-control" id="pendingDelivery" name="pending_delivery" readonly>
+                  <small class="form-text text-muted">Remaining quantity to be delivered</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="invoiceNumber" class="form-label">Invoice Number</label>
+                  <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3 d-flex align-items-center gap-2">
+                  <button type="button" class="btn btn-outline-secondary" id="invoiceToStoresBtn">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Invoice moved to stores
+                  </button>
+                  <input type="hidden" id="invoiceToFinance" name="invoice_to_finance" value="false">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+                <!-- Asset Generation Preview -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Asset Numbers to be Generated</h5>
+          </div>
+          <div class="card-body">
+            <div id="assetPreview">
+              <p class="text-muted">Asset numbers will be generated after delivery is recorded.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generated Assets List -->
+        <div class="card mb-4" id="generatedAssetsCard" style="display: none;">
+          <div class="card-header">
+            <h5><i class="bi bi-box-seam me-2"></i>Generated Assets List</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped table-hover" id="generatedAssetsTable">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Asset Number</th>
+                    <th>Asset Type</th>
+                    <th>Brand</th>
+                    <th>Vendor</th>
+                    <th>Invoice Number</th>
+                    <th>Processor</th>
+                    <th>RAM</th>
+                    <th>ROM</th>
+                    <th>Type Details</th>
+                     <th>Serial Number</th>
+                  </tr>
+                </thead>
+                <tbody id="generatedAssetsTableBody">
+                  <!-- Assets will be populated here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- PO Items Modal -->
+      <div class="modal fade" id="poItemsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="bi bi-list-ul me-2"></i>PO Items Details
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div id="po_items_table"></div>
+            </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mb-4">
+          <button type="submit" class="btn btn-success btn-lg">
+            <i class="bi bi-check-circle"></i> Record Delivery & Generate Assets
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Validation styling */
+.form-control.is-invalid {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control.is-valid {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.invalid-feedback {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.875em;
+  color: #dc3545;
+}
+
+.valid-feedback {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.875em;
+  color: #28a745;
+}
+
+/* Pending delivery styling */
+#pendingDelivery.text-warning {
+  color: #ffc107 !important;
+  font-weight: bold;
+}
+
+#pendingDelivery.text-success {
+  color: #28a745 !important;
+  font-weight: bold;
+}
+</style>
+
+<script>
+// Load POs on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadPurchaseOrders();
+  document.getElementById('deliveryDate').value = new Date().toISOString().split('T')[0];
+
+  // Handle selecting a PO from the combo (datalist)
+  const poCombo = document.getElementById('poCombo');
+  function tryResolveAndLoad(val) {
+    const hidden = document.getElementById('poSelect');
+    const all = window.allPOs || [];
+    const v = (val || '').trim();
+    if (!v) {
+      hidden.value = '';
+      document.getElementById('poDetails').style.display = 'none';
+      return;
+    }
+    // 1) Exact label match
+    let match = all.find(po => buildPOLabel(po) === v);
+    // 2) Case-insensitive exact
+    if (!match) match = all.find(po => buildPOLabel(po).toLowerCase() === v.toLowerCase());
+    // 3) Exact PO number match
+    if (!match) match = all.find(po => (po.po_number || '').toLowerCase() === v.toLowerCase());
+    // 4) Unique partial match on label
+    if (!match) {
+      const candidates = all.filter(po => buildPOLabel(po).toLowerCase().includes(v.toLowerCase()));
+      // If exactly one candidate, or multiple but we still want to show something, pick the first
+      if (candidates.length >= 1) match = candidates[0];
+    }
+    if (match) {
+      hidden.value = match.id;
+      // Normalize the input to the full label for clarity
+      poCombo.value = buildPOLabel(match);
+      loadPODetails(match.id);
+    }
+  }
+
+  poCombo.addEventListener('change', function() { tryResolveAndLoad(this.value); });
+  poCombo.addEventListener('input', function() { tryResolveAndLoad(this.value); });
+  poCombo.addEventListener('blur', function() { tryResolveAndLoad(this.value); });
+});
+
+function loadPurchaseOrders() {
+  // Load all POs
+  fetch('/api/purchase_orders')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        window.allPOs = data.purchase_orders || [];
+        renderPOOptions(window.allPOs);
+        // If a PO label is already typed, try to resolve it
+        const poCombo = document.getElementById('poCombo');
+        if (poCombo && poCombo.value) {
+          const evt = new Event('input');
+          poCombo.dispatchEvent(evt);
+        }
+        // If only one PO, auto-select it
+        if (Array.isArray(window.allPOs) && window.allPOs.length === 1) {
+          const only = window.allPOs[0];
+          document.getElementById('poCombo').value = buildPOLabel(only);
+          document.getElementById('poSelect').value = only.id;
+          loadPODetails(only.id);
+        }
+      }
+    });
+}
+
+function renderPOOptions(purchaseOrders) {
+  const datalist = document.getElementById('poOptions');
+  const hidden = document.getElementById('poSelect');
+  const currentId = hidden.value;
+  datalist.innerHTML = '';
+  purchaseOrders.forEach(po => {
+    const opt = document.createElement('option');
+    opt.value = buildPOLabel(po);
+    opt.dataset.id = po.id;
+    datalist.appendChild(opt);
+  });
+  if (currentId) {
+    const current = (purchaseOrders || []).find(p => String(p.id) === String(currentId));
+    if (current) {
+      document.getElementById('poCombo').value = buildPOLabel(current);
+    }
+  }
+}
+
+function buildPOLabel(po) {
+  return `${po.po_number} - ${po.pr_number} - ${po.vendor_name || 'N/A'} (Expected: ${po.expected_delivery_date || ''})`;
+}
+
+// Handle PO selection
+// note: selection now handled via poCombo change listener
+
+// Searchable dropdown for PO
+// filtering is native with datalist as user types; we rebuild datalist only on initial load
+
+function loadPODetails(poId) {
+  fetch(`/api/purchase_orders/${poId}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const po = data.purchase_order;
+        const pr = data.purchase_request;
+        const totals = data.totals || { total_to_procure: 0, total_received: 0, pending: 0 };
+        window.poTotals = totals;
+        const computedPending = Math.max(0, (Number(totals.total_to_procure) || 0) - (Number(totals.total_received) || 0));
+        window.basePending = Number.isFinite(totals.pending) ? totals.pending : computedPending;
+        
+        // Format dates
+        const poDate = new Date(po.po_date).toLocaleDateString();
+        const expectedDate = new Date(po.expected_delivery_date).toLocaleDateString();
+        
+        document.getElementById('poInfo').innerHTML = `
+          <div class="row">
+            <div class="col-md-6">
+          <strong>PO Number:</strong> ${po.po_number}<br>
+          <strong>PR Number:</strong> ${pr.pr_number}<br>
+              <strong>PO Date:</strong> ${poDate}<br>
+              <strong>Expected Delivery:</strong> ${expectedDate}<br>
+              <strong>Vendor Name:</strong> ${po.vendor_name || 'N/A'}<br>
+          <strong>Requested By:</strong> ${pr.requester_name}<br>
+          <strong>Asset Types:</strong> <span id="assetTypesInfo">Loading...</span><br>
+            </div>
+            <div class="col-md-6">
+              <strong>Total Amount:</strong> ₹${pr.total_amount || 0}<br>
+              <strong>Justification:</strong> ${pr.justification || 'N/A'}<br>
+              <strong>Status:</strong> <span class="badge bg-${totals.pending > 0 ? 'warning' : 'success'}">${totals.pending > 0 ? 'Open' : 'Delivered'}</span><br>
+              <strong>Created:</strong> ${new Date(po.created_at).toLocaleDateString()}<br>
+              <strong>Updated:</strong> ${new Date(po.updated_at).toLocaleDateString()}<br>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-12">
+              <div class="alert alert-info">
+                <strong>Summary:</strong> This PO contains approved items with quantities and amounts as shown in the details below.
+              </div>
+              <div class="alert alert-warning">
+                <strong>📋 Raised Quantity to Procure:</strong> <span id="totalRaisedQuantity">${totals.total_to_procure} items</span>
+                <br><strong>✅ Total Received:</strong> ${totals.total_received}
+                <br><strong>⌛ Pending:</strong> ${totals.pending}
+                <br><small class="text-muted">This is the total quantity approved for procurement across all items</small>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-info" onclick="showPOItems('${po.po_number}')">
+                <i class="bi bi-list-ul me-1"></i>View Detailed PO Items (Quantities & Amounts)
+              </button>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('poDetails').style.display = 'block';
+        
+        // Initialize inputs
+        const raisedInput = document.getElementById('raisedQuantity');
+        const qtyInput = document.getElementById('quantityReceived');
+        const pendingInput = document.getElementById('pendingDelivery');
+        // Set total approved (raised)
+        raisedInput.value = Number.isFinite(totals.total_to_procure) ? totals.total_to_procure : 0;
+        // Reset received input and limits
+        qtyInput.value = '';
+        qtyInput.max = Math.max(0, window.basePending);
+        qtyInput.placeholder = `Max: ${window.basePending}`;
+        // Show remaining pending before current receipt
+        pendingInput.value = Math.max(0, window.basePending);
+        // Set color classes for pending
+        if (window.basePending > 0) {
+          pendingInput.classList.add('text-warning');
+          pendingInput.classList.remove('text-success');
+        } else {
+          pendingInput.classList.add('text-success');
+          pendingInput.classList.remove('text-warning');
+        }
+
+        // Load PR items for quantity validation and additional display
+        loadPRItems(pr.id);
+      }
+    });
+}
+
+function loadPRItems(prId) {
+  fetch(`/api/purchase_requests/${prId}?delivery_entry=true`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        window.prItems = data.items;
+        updateQuantityValidation();
+        // Update Asset Types info
+        try {
+          const approved = (window.prItems || []).filter(i => i.approval_status === 'approved');
+          const types = [...new Set(approved.map(i => i.asset_type_name))];
+          const el = document.getElementById('assetTypesInfo');
+          if (el) el.textContent = types.length ? types.join(', ') : 'N/A';
+        } catch (e) {
+          const el = document.getElementById('assetTypesInfo');
+          if (el) el.textContent = 'N/A';
+        }
+      } else {
+        console.error('Failed to load PR items:', data.error);
+        // Show error message
+        const totalRaisedQuantitySpan = document.getElementById('totalRaisedQuantity');
+        if (totalRaisedQuantitySpan) {
+          totalRaisedQuantitySpan.textContent = 'Error loading data';
+        }
+        const el = document.getElementById('assetTypesInfo');
+        if (el) el.textContent = 'N/A';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading PR items:', error);
+      const totalRaisedQuantitySpan = document.getElementById('totalRaisedQuantity');
+      if (totalRaisedQuantitySpan) {
+        totalRaisedQuantitySpan.textContent = 'Error loading data';
+      }
+    });
+}
+
+function updateQuantityValidation() {
+  if (window.prItems && window.prItems.length > 0) {
+    // Filter only approved items for quantity calculations
+    const approvedItems = window.prItems.filter(item => item.approval_status === 'approved');
+    
+    const totalRequested = approvedItems.reduce((sum, item) => sum + item.quantity_required, 0);
+    const totalToProcure = approvedItems.reduce((sum, item) => sum + (item.quantity_to_procure || 0), 0);
+    
+    const quantityInput = document.getElementById('quantityReceived');
+    const pending = (typeof window.basePending === 'number') ? window.basePending : ((window.poTotals && typeof window.poTotals.pending === 'number') ? window.poTotals.pending : totalRequested);
+    quantityInput.max = pending;
+    quantityInput.placeholder = `Max: ${pending}`;
+    
+    // Set the raised quantity to procure field
+    const raisedQuantityInput = document.getElementById('raisedQuantity');
+    // keep raised as total approved
+    raisedQuantityInput.value = (window.poTotals && typeof window.poTotals.total_to_procure === 'number') ? window.poTotals.total_to_procure : totalToProcure;
+    
+    // Calculate and set pending delivery
+    updatePendingDelivery();
+    
+    // Update the total raised quantity display
+    const totalRaisedQuantitySpan = document.getElementById('totalRaisedQuantity');
+    if (totalRaisedQuantitySpan) {
+      const toProcureDisplay = (window.poTotals && typeof window.poTotals.total_to_procure === 'number') ? window.poTotals.total_to_procure : totalToProcure;
+      totalRaisedQuantitySpan.textContent = `${toProcureDisplay} items`;
+    }
+    
+    console.log(`DEBUG: Found ${approvedItems.length} approved items out of ${window.prItems.length} total items`);
+    console.log(`DEBUG: Total to procure: ${totalToProcure}`);
+  }
+}
+
+function showPOItems(poNumber) {
+  // Get the selected PO ID
+  const poId = document.getElementById('poSelect').value;
+  if (!poId) return;
+  
+  // Load PR items for this PO
+  fetch(`/api/purchase_orders/${poId}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const prId = data.purchase_order.pr_id;
+        
+        // Get PR items
+        fetch(`/api/purchase_requests/${prId}`)
+          .then(r => r.json())
+          .then(prData => {
+            if (prData.success) {
+              const items = prData.items.filter(item => item.approval_status === 'approved');
+              const tableContainer = document.getElementById('po_items_table');
+              
+              let tableHTML = `
+                <div class="table-responsive">
+                  <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                      <tr>
+                        <th>Asset Type</th>
+                        <th>Configuration</th>
+                        <th>Brand</th>
+                        <th>Vendor</th>
+                        <th>Quantity to Procure</th>
+                        <th>Unit Cost</th>
+                        <th>Total Cost</th>
+                        <th>FAVOR</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+              `;
+              
+              let totalQuantityToProcure = 0;
+              let totalCost = 0;
+              
+              items.forEach(item => {
+                const itemTotalCost = (item.unit_cost || 0) * (item.quantity_to_procure || 0);
+                let additional = {};
+                try {
+                  if (item.additional_fields) {
+                    additional = typeof item.additional_fields === 'string' ? JSON.parse(item.additional_fields) : item.additional_fields;
+                  }
+                } catch (e) { additional = {}; }
+                const processor = additional['processor'] || item.processor || '';
+                const ram = additional['ram'] || item.ram || '';
+                const rom = additional['rom'] || item.rom || '';
+                const sysType = additional['system-type'] || additional['system_type'] || item.system_type || '';
+                const configFallbackParts = [];
+                if (processor) configFallbackParts.push(`Processor: ${processor}`);
+                if (ram) configFallbackParts.push(`RAM: ${ram}`);
+                if (rom) configFallbackParts.push(`ROM: ${rom}`);
+                if (sysType) configFallbackParts.push(`Type: ${sysType}`);
+                const configText = item.configuration || (configFallbackParts.length ? configFallbackParts.join(', ') : '-');
+                totalQuantityToProcure += (item.quantity_to_procure || 0);
+                totalCost += itemTotalCost;
+                
+                tableHTML += `
+                  <tr>
+                    <td>${item.asset_type_name}</td>
+                      <td>${configText}</td>
+                    <td>${item.brand || '-'}</td>
+                    <td>${item.vendor || '-'}</td>
+                    <td>${item.quantity_to_procure || 0}</td>
+                    <td>₹${(item.unit_cost || 0).toFixed(2)}</td>
+                    <td>₹${itemTotalCost.toFixed(2)}</td>
+                    <td><span class="badge bg-${item.favor === 'Yes' ? 'success' : 'secondary'}">${item.favor || 'No'}</span></td>
+                  </tr>
+                `;
+              });
+              
+              // Add summary row
+              tableHTML += `
+                <tr class="table-info">
+                  <td colspan="4"><strong>Total Raised Quantity to Procure:</strong></td>
+                  <td><strong>${totalQuantityToProcure}</strong></td>
+                  <td><strong>Total:</strong></td>
+                  <td><strong>₹${totalCost.toFixed(2)}</strong></td>
+                  <td></td>
+                </tr>
+              `;
+              
+              tableHTML += `
+                    </tbody>
+                  </table>
+                </div>
+              `;
+              
+              tableContainer.innerHTML = tableHTML;
+              
+              // Show modal
+              const modal = new bootstrap.Modal(document.getElementById('poItemsModal'));
+              modal.show();
+            }
+          });
+      }
+    });
+}
+
+// Handle quantity change for asset preview
+document.getElementById('quantityReceived').addEventListener('input', function() {
+  const quantity = Number(this.value);
+  
+  // Validate the quantity
+  const isValid = validateQuantityReceived();
+  
+  // Only update preview and pending delivery if quantity is valid
+  if (isValid) {
+    updateAssetPreview(Math.max(0, quantity || 0));
+    updatePendingDelivery();
+  } else {
+    // Clear preview if invalid
+    updateAssetPreview(0);
+    updatePendingDelivery();
+  }
+});
+
+// Function to calculate and update pending delivery
+function updatePendingDelivery() {
+  const basePending = typeof window.basePending === 'number' ? window.basePending : 0;
+  const quantityReceived = parseInt(document.getElementById('quantityReceived').value) || 0;
+  const pendingDelivery = Math.max(0, basePending - quantityReceived);
+  
+  const pendingDeliveryInput = document.getElementById('pendingDelivery');
+  pendingDeliveryInput.value = pendingDelivery;
+  
+  // Update the visual appearance based on pending delivery
+  if (pendingDelivery > 0) {
+    pendingDeliveryInput.classList.add('text-warning');
+    pendingDeliveryInput.classList.remove('text-success');
+  } else {
+    pendingDeliveryInput.classList.add('text-success');
+    pendingDeliveryInput.classList.remove('text-warning');
+  }
+}
+
+// Toggle button for invoice moved to stores -> hidden field value true/false
+document.getElementById('invoiceToStoresBtn').addEventListener('click', function() {
+  const hidden = document.getElementById('invoiceToFinance');
+  const wasTrue = hidden.value === 'true';
+  const nowTrue = !wasTrue;
+  hidden.value = nowTrue.toString();
+  this.classList.toggle('btn-outline-secondary', wasTrue);
+  this.classList.toggle('btn-success', nowTrue);
+  this.innerHTML = nowTrue
+    ? '<i class="bi bi-check2-circle me-1"></i> Invoice moved to stores'
+    : '<i class="bi bi-box-arrow-in-right me-1"></i> Invoice moved to stores';
+
+  // When turning ON, create delivery and assets and populate the table
+  if (nowTrue) {
+    const poId = document.getElementById('poSelect').value;
+    const invoiceNumber = (document.getElementById('invoiceNumber').value || '').trim();
+    const qtyValid = validateQuantityReceived();
+    const qty = parseInt(document.getElementById('quantityReceived').value) || 0;
+    if (!poId) {
+      alert('Please select a Purchase Order first.');
+      return;
+    }
+    if (!invoiceNumber) {
+      alert('Please enter the Invoice Number before moving to stores.');
+      return;
+    }
+    if (!qtyValid || qty <= 0) {
+      alert('Please enter a valid Quantity Received before moving to stores.');
+      return;
+    }
+    if (window.assetsCreated) {
+      // Prevent duplicate creation
+      return;
+    }
+    window.assetsCreated = true;
+    createAssetsFromDelivery(invoiceNumber, poId, qty);
+  }
+});
+
+// Function to validate quantity received
+function validateQuantityReceived() {
+  const basePending = typeof window.basePending === 'number' ? window.basePending : 0;
+  const quantityInput = document.getElementById('quantityReceived');
+  const val = quantityInput.value;
+  const quantityReceived = Number(val);
+  const maxAllowed = Math.max(0, basePending);
+  
+  // Clear previous validation states
+  quantityInput.classList.remove('is-valid', 'is-invalid');
+  
+  if (!val) {
+    // empty, let required attribute handle on submit; clear custom messages
+    quantityInput.setCustomValidity('');
+    hideQuantityError();
+    return false;
+  }
+  if (!Number.isFinite(quantityReceived)) {
+    quantityInput.classList.add('is-invalid');
+    quantityInput.setCustomValidity('Enter a valid number');
+    showQuantityError('Enter a valid number');
+    return false;
+  }
+  if (quantityReceived <= 0) {
+    quantityInput.classList.add('is-invalid');
+    quantityInput.setCustomValidity('Quantity received must be greater than 0');
+    showQuantityError('Quantity received must be greater than 0');
+    return false;
+  }
+  if (quantityReceived > maxAllowed) {
+    quantityInput.classList.add('is-invalid');
+    quantityInput.setCustomValidity(`Quantity received cannot exceed the pending quantity (${maxAllowed})`);
+    showQuantityError(`Enter a value between 1 and ${maxAllowed}`);
+    return false;
+  }
+  // Valid quantity
+  quantityInput.classList.add('is-valid');
+  quantityInput.setCustomValidity('');
+  hideQuantityError();
+  return true;
+}
+
+// Function to show quantity error message
+function showQuantityError(message) {
+  let errorDiv = document.getElementById('quantityError');
+  if (!errorDiv) {
+    errorDiv = document.createElement('div');
+    errorDiv.id = 'quantityError';
+    errorDiv.className = 'invalid-feedback';
+    document.getElementById('quantityReceived').parentNode.appendChild(errorDiv);
+  }
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+}
+
+// Function to hide quantity error message
+function hideQuantityError() {
+  const errorDiv = document.getElementById('quantityError');
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+  }
+}
+
+function updateAssetPreview(quantity) {
+  const preview = document.getElementById('assetPreview');
+  
+  if (quantity > 0) {
+    const assetNumbers = [];
+    for (let i = 1; i <= quantity; i++) {
+      const assetNumber = `AST${new Date().toISOString().replace(/[-:]/g, '').slice(0, 14)}${i.toString().padStart(3, '0')}`;
+      assetNumbers.push(assetNumber);
+    }
+    
+    preview.innerHTML = `
+      <div class="alert alert-success">
+        <strong>${quantity} asset(s) will be generated:</strong><br>
+        <div class="mt-2">
+          ${assetNumbers.map(num => `<span class="badge badge-primary mr-1">${num}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  } else {
+    preview.innerHTML = '<p class="text-muted">Asset numbers will be generated after delivery is recorded.</p>';
+  }
+}
+
+// Handle invoice number input for asset creation
+document.getElementById('invoiceNumber').addEventListener('blur', function() {
+  // Only auto-create if user has toggled move-to-stores and not created yet
+  const moveFlag = document.getElementById('invoiceToFinance').value === 'true';
+  if (!moveFlag || window.assetsCreated) return;
+  const invoiceNumber = this.value.trim();
+  const poId = document.getElementById('poSelect').value;
+  const quantityReceived = parseInt(document.getElementById('quantityReceived').value) || 0;
+  if (invoiceNumber && poId && quantityReceived > 0) {
+    window.assetsCreated = true;
+    createAssetsFromDelivery(invoiceNumber, poId, quantityReceived);
+  }
+});
+
+// Function to create assets from delivery
+function createAssetsFromDelivery(invoiceNumber, poId, quantityReceived) {
+  const formData = {
+    po_id: poId,
+    delivery_date: document.getElementById('deliveryDate').value,
+    quantity_received: quantityReceived,
+    invoice_number: invoiceNumber,
+    create_assets: true
+  };
+  
+  // Show loading state
+  const assetPreview = document.getElementById('assetPreview');
+  assetPreview.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split"></i> Creating assets...</div>';
+  
+  // Create delivery and assets
+  fetch('/api/deliveries/create-with-assets', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(formData)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      // Show success message
+      assetPreview.innerHTML = `
+        <div class="alert alert-success">
+          <i class="bi bi-check-circle"></i> <strong>${data.assets.length} assets created successfully!</strong>
+          <br>Delivery ID: ${data.delivery_id}
+        </div>
+      `;
+      
+      // Display generated assets table
+      displayGeneratedAssets(data.assets);
+      
+    } else {
+      assetPreview.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle"></i> Error creating assets: ${data.error}
+        </div>
+      `;
+    }
+  })
+  .catch(error => {
+    assetPreview.innerHTML = `
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle"></i> Error: ${error.message}
+      </div>
+    `;
+  });
+}
+
+// Function to display generated assets in table
+function displayGeneratedAssets(assets) {
+  const tableBody = document.getElementById('generatedAssetsTableBody');
+  const assetsCard = document.getElementById('generatedAssetsCard');
+  
+  // Clear existing rows
+  tableBody.innerHTML = '';
+  
+  // Add asset rows
+  assets.forEach(asset => {
+    const row = document.createElement('tr');
+    // Editable serial number input (no auto-fill; user types it)
+    const serialCell = `<input type="text" class="form-control form-control-sm" data-asset-id="${asset.id || ''}" value="" placeholder="Enter Serial Number">`;
+    // Add warranty expiry editor (date input) in a new column if needed
+    const warrantyCell = `<input type="date" class="form-control form-control-sm" data-asset-warranty-id="${asset.id || ''}" value="${asset.warranty_expiry || ''}">`;
+    row.innerHTML = `
+      <td><strong>${asset.asset_number}</strong></td>
+      <td><span class="badge bg-primary">${asset.asset_type}</span></td>
+      <td>${asset.brand}</td>
+      <td>${asset.vendor}</td>
+      <td>${asset.invoice_number}</td>
+      <td>${asset.processor || '-'}</td>
+      <td>${asset.ram || '-'}</td>
+      <td>${asset.rom || '-'}</td>
+      <td>${asset.type_details || '-'}</td>
+      <td>${serialCell}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+  
+  // Show the assets card
+  assetsCard.style.display = 'block';
+  
+  // Scroll to assets table
+  assetsCard.scrollIntoView({ behavior: 'smooth' });
+
+  // Wire up serial number and warranty expiry inline editors
+  Array.from(tableBody.querySelectorAll('input[data-asset-id]')).forEach(input => {
+    input.addEventListener('blur', function() {
+      const id = this.getAttribute('data-asset-id');
+      const serial = this.value.trim();
+      if (!id) return;
+      fetch(`/api/assets/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serial_number: serial })
+      }).then(r => r.json()).then(res => {
+        if (!res.success) {
+          alert('Error saving serial: ' + (res.error || 'Unknown error'));
+        }
+      }).catch(err => alert('Network error saving serial: ' + err.message));
+    });
+  });
+
+  Array.from(tableBody.querySelectorAll('input[data-asset-warranty-id]')).forEach(input => {
+    input.addEventListener('change', function() {
+      const id = this.getAttribute('data-asset-warranty-id');
+      const val = this.value; // '' or 'YYYY-MM-DD'
+      if (!id) return;
+      fetch(`/api/assets/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ warranty_expiry: val })
+      }).then(r => r.json()).then(res => {
+        if (!res.success) {
+          alert('Error saving warranty expiry: ' + (res.error || 'Unknown error'));
+        }
+      }).catch(err => alert('Network error saving warranty expiry: ' + err.message));
+    });
+  });
+}
+
+// Form submission
+document.getElementById('deliveryForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // Validate quantity before submission
+  if (!validateQuantityReceived()) {
+    alert('Please fix the quantity validation errors before submitting.');
+    return;
+  }
+  
+  const formData = {
+    po_id: document.getElementById('poSelect').value,
+    delivery_date: document.getElementById('deliveryDate').value,
+    quantity_received: parseInt(document.getElementById('quantityReceived').value),
+    invoice_number: document.getElementById('invoiceNumber').value,
+    grn_number: (document.getElementById('grnNumber') ? document.getElementById('grnNumber').value : ''),
+    invoice_to_finance: (document.getElementById('invoiceToFinance') ? (document.getElementById('invoiceToFinance').value === 'true') : false)
+  };
+  
+  // Record delivery
+  fetch('/api/deliveries', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(formData)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      // Generate assets
+      return fetch('/api/assets/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          delivery_id: data.delivery_id,
+          quantity: formData.quantity_received
+        })
+      });
+    } else {
+      throw new Error(data.error);
+    }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      alert(`Delivery recorded successfully!\n\nGenerated ${data.asset_numbers.length} asset numbers:\n${data.asset_numbers.join('\n')}`);
+      window.location.href = '/procurement/dashboard';
+    } else {
+      alert('Error generating assets: ' + data.error);
+    }
+  })
+  .catch(error => {
+    alert('Error recording delivery: ' + error);
+  });
+});
+</script>
+{% endblock %} 

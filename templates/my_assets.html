@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-box-seam text-primary me-2"></i>
+            My Asset Details
+          </h1>
+          <p class="text-muted">Welcome back, {{ current_user.email }}</p>
+        </div>
+        <div class="text-end">
+          <span class="badge bg-success fs-6 px-3 py-2">
+            <i class="fas fa-user me-1"></i>
+            User
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asset Overview Cards -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">My Asset Overview</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            {% for asset in asset_counts %}
+            {% if asset.count > 0 %}
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="status-card bg-gradient-primary text-white">
+                <div class="status-card-content">
+                  <div class="status-card-icon">
+                    <i class="fas fa-{{ 'laptop' if asset.asset_type == 'Laptop' else 'mouse' if asset.asset_type == 'Mouse' else 'keyboard' if asset.asset_type == 'Keyboard' else 'desktop' if asset.asset_type == 'System' else 'print' if asset.asset_type == 'Printer' else 'box' }}"></i>
+                  </div>
+                  <div class="status-card-info">
+                    <h4>{{ asset.count }}</h4>
+                    <p>{{ asset.asset_type }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asset Details Table -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">My Assigned Assets</h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover">
+              <style>
+                .table th {
+                  background-color: #f8f9fc;
+                  font-weight: 600;
+                  font-size: 0.85rem;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                }
+                .table td {
+                  font-size: 0.9rem;
+                  vertical-align: middle;
+                }
+                .badge {
+                  font-size: 0.75rem;
+                }
+                .table-responsive {
+                  border-radius: 0.5rem;
+                  overflow: hidden;
+                }
+              </style>
+              <thead>
+                <tr>
+                  <th>Asset ID</th>
+                  <th>Asset Number</th>
+                  <th>Serial Number</th>
+                  <th>Brand</th>
+                  <th>Asset Type</th>
+                  <th>Specifications</th>
+                  <th>Status</th>
+                  <th>Purchase Date</th>
+                  <th>Warranty Expiry</th>
+                  <th>Invoice Number</th>
+                  <th>Unit</th>
+                  <th>Assigned Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for asset in user_assets %}
+                <tr>
+                  <td>{{ asset.id }}</td>
+                  <td>{{ asset.asset_number or '-' }}</td>
+                  <td>{{ asset.serial_number }}</td>
+                  <td>{{ asset.brand }}</td>
+                  <td>
+                    <span class="badge bg-primary">{{ asset.asset_type }}</span>
+                  </td>
+                  <td>
+                    {% if asset.asset_type and asset.asset_type.lower() == 'laptop' %}
+                      {% if asset.processor %}CPU: {{ asset.processor }}{% endif %}
+                      {% if asset.ram %}{% if asset.processor %}<br>{% endif %}RAM: {{ asset.ram }}{% endif %}
+                      {% if asset.rom %}{% if asset.processor or asset.ram %}<br>{% endif %}Storage: {{ asset.rom }}{% endif %}
+                    {% elif asset.asset_type and asset.asset_type.lower() == 'mouse' %}
+                      {% if asset.mouse_type %}Type: {{ asset.mouse_type }}{% endif %}
+                    {% elif asset.asset_type and asset.asset_type.lower() == 'keyboard' %}
+                      {% if asset.keyboard_type %}Type: {{ asset.keyboard_type }}{% endif %}
+                      {% if asset.keyboard_connection %}{% if asset.keyboard_type %}<br>{% endif %}Connection: {{ asset.keyboard_connection }}{% endif %}
+                    {% elif asset.asset_type and asset.asset_type.lower() == 'printer' %}
+                      {% if asset.printer_type %}Type: {{ asset.printer_type }}{% endif %}
+                      {% if asset.printer_function %}{% if asset.printer_type %}<br>{% endif %}Function: {{ asset.printer_function }}{% endif %}
+                      {% if asset.printer_connectivity %}{% if asset.printer_type or asset.printer_function %}<br>{% endif %}Connectivity: {{ asset.printer_connectivity }}{% endif %}
+                    {% elif asset.asset_type and asset.asset_type.lower() in ['system', 'systems'] %}
+                      {% if asset.system_type %}Type: {{ asset.system_type }}{% endif %}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge bg-{{ 'success' if asset.status == 'assigned' else 'warning' if asset.status == 'maintenance' else 'danger' if asset.status == 'retired' else 'primary' }}">
+                      {{ asset.status or 'assigned' }}
+                    </span>
+                  </td>
+                  <td>{{ asset.purchase_date.strftime('%Y-%m-%d') if asset.purchase_date else '-' }}</td>
+                  <td>
+                    {% if asset.warranty_expiry %}
+                      <span class="badge bg-success">{{ asset.warranty_expiry.strftime('%Y-%m-%d') }}</span>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>{{ asset.invoice_number or '-' }}</td>
+                  <td>{{ asset.unit or '-' }}</td>
+                  <td>{{ asset.assigned_at.strftime('%Y-%m-%d') if asset.assigned_at else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="12" class="text-center text-muted">
+                    <div class="py-4">
+                      <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                      <h5 class="text-muted">No assets assigned to you yet.</h5>
+                      <p class="text-muted">Contact your IT team to request asset assignments.</p>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Professional Dashboard Styles -->
+<style>
+  /* Status cards styling */
+  .status-card {
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  }
+  
+  .status-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+  }
+  
+  .status-card-content {
+    display: flex;
+    align-items: center;
+  }
+  
+  .status-card-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+  }
+  
+  .status-card-info h4 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  
+  .status-card-info p {
+    margin: 0;
+    opacity: 0.9;
+  }
+  
+  /* Gradient backgrounds */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+  }
+  
+  .bg-gradient-success {
+    background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+  }
+  
+  .bg-gradient-warning {
+    background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+  }
+  
+  .bg-gradient-info {
+    background: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .status-card {
+      padding: 1rem;
+    }
+    
+    .status-card-info h4 {
+      font-size: 1.5rem;
+    }
+    
+    .status-card-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+    }
+  }
+</style>
+{% endblock %} 

@@ -1,82 +1,300 @@
 {% extends 'base.html' %}
+
+<!-- Include jQuery first, then Select2 CSS and JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 {% block content %}
-<div class="container mt-4">
-  <h2>Assign Asset</h2>
-  <div class="card mb-4">
-    <div class="card-body">
-      <form method="POST">
-        {{ form.hidden_tag() }}
-        <div class="row">
-          <div class="col-md-4 mb-2">
-            <label for="assetTypeSelect" class="form-label">Asset Type</label>
-            <select id="assetTypeSelect" class="form-select">
-              <option value="">All</option>
-              <option value="Laptop">Laptop</option>
-              <option value="Mouse">Mouse</option>
-              <option value="Keyboard">Keyboard</option>
-              <option value="System">System</option>
-              <option value="Others">Others</option>
-            </select>
-          </div>
-          <div class="col-md-4 mb-2">{{ form.asset_id.label(class="form-label") }}{{ form.asset_id(class="form-select") }}</div>
-          <div class="col-md-4 mb-2">{{ form.user_id.label(class="form-label") }}{{ form.user_id(class="form-select") }}</div>
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-link text-primary me-2"></i>
+            Assign Asset
+          </h1>
+          <p class="text-muted">Assign assets to users</p>
         </div>
-        <div class="row">
-          <div class="col-md-2 mb-2 d-flex align-items-end">{{ form.submit(class="btn btn-primary w-100") }}</div>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
-  <h4>Assignment History</h4>
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Asset</th>
-        <th>User</th>
-        <th>Assigned At</th>
-        <th>Returned At</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for a in assignments %}
-      <tr>
-        <td>{{ a.id }}</td>
-        <td>{{ a.serial_number }} ({{ a.brand }} {{ a.model }})</td>
-        <td>{{ a.name }} ({{ a.email }})</td>
-        <td>{{ a.assigned_at }}</td>
-        <td>{{ a.returned_at or '-' }}</td>
-        <td>
-          {% if not a.returned_at %}
-          <form method="POST" action="/assign/return/{{ a.id }}" style="display:inline-block" onsubmit="return confirm('Mark as returned?');">
-            <button type="submit" class="btn btn-sm btn-success">Return</button>
+
+  <!-- Assignment Form -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header py-3 text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <h6 class="m-0 font-weight-bold">Assign Asset to User</h6>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="row">
+              <div class="col-md-3 mb-2">
+                <label for="asset_type_filter" class="form-label">Asset Type</label>
+                <select id="asset_type_filter" class="form-select">
+                  <option value="">All Types</option>
+                  {% for asset_type in asset_types %}
+                    <option value="{{ asset_type.name }}">{{ asset_type.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3 mb-2">
+                <label for="asset_id" class="form-label">Asset</label>
+                <select id="asset_id" name="asset_id" class="form-select select2-asset" required>
+                  <option value="">Search for an asset...</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-2">
+                <label for="user_id" class="form-label">User</label>
+                <select id="user_id" name="user_id" class="form-select select2-user" required>
+                  <option value="">Search for a user...</option>
+                  {% for value, label in form.user_id.choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-2 mb-2">
+                <label for="unit" class="form-label">Unit</label>
+                {{ form.unit(class="form-control") }}
+              </div>
+              <div class="col-md-1 mb-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Assign Asset</button>
+              </div>
+            </div>
           </form>
-          {% else %}-{% endif %}
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="6" class="text-center">No assignments found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assignment History -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header py-3 text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <h6 class="m-0 font-weight-bold">Assignment History</h6>
+        </div>
+        <div class="card-body">
+          <!-- Search Bar for Assignment History -->
+          <div class="row mb-3">
+            <div class="col-md-4 mb-2">
+              <label for="assignmentSearch" class="form-label">Search Assignments</label>
+              <input type="text" id="assignmentSearch" class="form-control" placeholder="Search by asset, user, unit, type...">
+            </div>
+            <div class="col-md-3 mb-2">
+              <label for="assignmentTypeFilter" class="form-label">Filter by Asset Type</label>
+              <select id="assignmentTypeFilter" class="form-select">
+                <option value="">All</option>
+                {% for asset_type in asset_types %}
+                  <option value="{{ asset_type.name }}">{{ asset_type.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="assignmentTable">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th>Asset Type</th>
+                  <th>User</th>
+                  <th>Unit</th>
+                  <th>Assigned Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for assignment in assignments %}
+                <tr>
+                  <td>{{ assignment.serial_number }} ({{ assignment.brand }})</td>
+                  <td>{{ assignment.asset_type or '-' }}</td>
+                  <td>{{ assignment.user_name }} ({{ assignment.user_email }})</td>
+                  <td>{{ assignment.unit or '-' }}</td>
+                  <td>{{ assignment.assigned_at.strftime('%Y-%m-%d') if assignment.assigned_at else '-' }}</td>
+                  <td>
+                    <span class="badge bg-success">Active</span>
+                  </td>
+                  <td>
+                    <form method="POST" action="{{ url_for('return_asset', assignment_id=assignment.id) }}" style="display: inline;">
+                      <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Are you sure you want to return this asset?')">
+                        <i class="fas fa-undo"></i> Return
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="7" class="text-center">No assignments found.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
 <script>
-// Asset type filter for asset dropdown
-const assetTypeSelect = document.getElementById('assetTypeSelect');
-const assetDropdown = document.getElementById('asset_id');
-if (assetTypeSelect && assetDropdown) {
-  // Store original options
-  const allOptions = Array.from(assetDropdown.options);
-  assetTypeSelect.addEventListener('change', function() {
-    const type = this.value;
-    assetDropdown.innerHTML = '';
-    allOptions.forEach(opt => {
-      if (!type || opt.text.includes('(' + type) || opt.text.includes('(' + type + ' ')) {
-        assetDropdown.appendChild(opt.cloneNode(true));
+$(document).ready(function() {
+  console.log('Document ready - initializing assign page');
+  
+  // Initialize Select2 for Asset dropdown
+  $('.select2-asset').select2({
+    placeholder: 'Search for an asset...',
+    allowClear: true,
+    width: '100%',
+    language: {
+      noResults: function() {
+        return "No assets found";
       }
-    });
+    }
   });
-}
+
+  // Initialize Select2 for User dropdown
+  $('.select2-user').select2({
+    placeholder: 'Search for a user...',
+    allowClear: true,
+    width: '100%',
+    language: {
+      noResults: function() {
+        return "No users found";
+      }
+    }
+  });
+
+  // Asset Type Filter Functionality
+  const assetTypeSelect = document.getElementById('asset_type_filter');
+  console.log('Asset type select element:', assetTypeSelect);
+  
+  // Function to load assets
+  function loadAssets(assetType = 'all') {
+    console.log('loadAssets called with:', assetType);
+    const assetSelect = $('.select2-asset');
+    
+    // Show loading state
+    assetSelect.empty();
+    assetSelect.append('<option value="">Loading assets...</option>');
+    assetSelect.trigger('change');
+    
+    // Fetch assets by type from API
+    const url = assetType && assetType !== 'all' ? `/api/assets/by_type/${encodeURIComponent(assetType)}` : '/api/assets/by_type/all';
+    console.log('Fetching from URL:', url);
+    
+    fetch(url)
+      .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Received data:', data);
+        if (data.success) {
+          // Clear current options
+          assetSelect.empty();
+          
+          // Add placeholder option
+          assetSelect.append('<option value="">Search for an asset...</option>');
+          
+          // Add filtered assets
+          data.assets.forEach(function(asset) {
+            assetSelect.append(`<option value="${asset.id}">${asset.text}</option>`);
+          });
+          
+          console.log(`Added ${data.assets.length} assets to dropdown`);
+          
+          // Trigger change to update Select2
+          assetSelect.trigger('change');
+        } else {
+          console.error('Error fetching assets:', data.error);
+          assetSelect.empty();
+          assetSelect.append('<option value="">Error loading assets</option>');
+          assetSelect.trigger('change');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        assetSelect.empty();
+        assetSelect.append('<option value="">Error loading assets</option>');
+        assetSelect.trigger('change');
+      });
+  }
+  
+  if (assetTypeSelect) {
+    console.log('Asset type select found, setting up event listener');
+    // Load all assets initially after a short delay to ensure page is ready
+    setTimeout(() => {
+      console.log('Loading initial assets...');
+      loadAssets('all');
+    }, 100);
+    
+    assetTypeSelect.addEventListener('change', function() {
+      const type = this.value;
+      console.log('Asset type changed to:', type);
+      
+      // Clear current selection
+      $('.select2-asset').val(null).trigger('change');
+      
+      // Load assets for selected type
+      loadAssets(type);
+    });
+  } else {
+    console.error('Asset type select element not found!');
+  }
+
+  // Assignment History Search and Filter Functionality
+  const searchInput = document.getElementById('assignmentSearch');
+  const typeFilter = document.getElementById('assignmentTypeFilter');
+  const table = document.getElementById('assignmentTable');
+  const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+  
+  function filterAssignments() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedType = typeFilter.value.toLowerCase();
+    
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const cells = row.getElementsByTagName('td');
+      
+      if (cells.length === 0) continue; // Skip header row
+      
+      let showRow = true;
+      
+      // Search filter
+      if (searchTerm) {
+        let rowText = '';
+        for (let j = 0; j < cells.length; j++) {
+          rowText += cells[j].textContent + ' ';
+        }
+        if (!rowText.toLowerCase().includes(searchTerm)) {
+          showRow = false;
+        }
+      }
+      
+      // Type filter
+      if (selectedType && showRow) {
+        const assetTypeCell = cells[1]; // Asset Type column
+        if (assetTypeCell && !assetTypeCell.textContent.toLowerCase().includes(selectedType)) {
+          showRow = false;
+        }
+      }
+      
+      row.style.display = showRow ? '' : 'none';
+    }
+  }
+  
+  if (searchInput) {
+    searchInput.addEventListener('input', filterAssignments);
+  }
+  
+  if (typeFilter) {
+    typeFilter.addEventListener('change', filterAssignments);
+  }
+});
 </script>
-{% endblock %} 
+{% endblock %}

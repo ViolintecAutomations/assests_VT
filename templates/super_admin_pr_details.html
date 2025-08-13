@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}PR Details - Super Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-file-alt"></i> Purchase Request Details
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">PR: {{ pr.pr_number }}</h6>
+                    <div>
+                        {% if pr.status == 'pending' %}
+                        <a href="/super-admin/approve-pr/{{ pr.id }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i> Approve PR
+                        </a>
+                        {% endif %}
+                        <a href="/super-admin/pr-requests" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- PR Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-info-circle"></i> Request Information
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <table class="table table-borderless">
+                                                <tr>
+                                                    <td><strong><i class="bi bi-hash"></i> PR Number:</strong></td>
+                                                    <td><span class="badge bg-primary fs-6">{{ pr.pr_number }}</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong><i class="bi bi-flag"></i> Status:</strong></td>
+                                                    <td>
+                                                        <span class="badge badge-{{ 'warning' if pr.status == 'pending' else 'success' if pr.status == 'approved' else 'secondary' }} fs-6">
+                                                            {{ pr.status.title() }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong><i class="bi bi-person"></i> Requester:</strong></td>
+                                                    <td>{{ pr.requester_name or 'N/A' }}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td><strong><i class="bi bi-person-badge"></i> From:</strong></td>
+                                                    <td>{{ pr.from_field or 'N/A' }}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td><strong><i class="bi bi-shield-check"></i> Approver:</strong></td>
+                                                    <td>{{ pr.approver_email or 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong><i class="bi bi-calendar"></i> Created Date:</strong></td>
+                                                    <td>{{ pr.created_at.strftime('%Y-%m-%d %H:%M') if pr.created_at else 'N/A' }}</td>
+                                                </tr>
+                                                {% if pr.updated_at and pr.updated_at != pr.created_at %}
+                                                <tr>
+                                                    <td><strong><i class="bi bi-calendar-check"></i> Last Updated:</strong></td>
+                                                    <td>{{ pr.updated_at.strftime('%Y-%m-%d %H:%M') if pr.updated_at else 'N/A' }}</td>
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-primary">
+                                                        <i class="bi bi-people"></i> For
+                                                    </h6>
+                                                    <p class="card-text">{{ pr.justification or 'No purpose specified' }}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Summary Statistics -->
+                                            {% if pr_items %}
+                                            <div class="mt-3">
+                                                <h6 class="text-primary">
+                                                    <i class="bi bi-calculator"></i> Summary
+                                                </h6>
+                                                <ul class="list-unstyled">
+                                                    <li class="mb-2">
+                                                        <i class="bi bi-circle-fill text-primary me-2"></i>
+                                                        <strong>Total Items:</strong> {{ pr_items|length }}
+                                                    </li>
+                                                    <li class="mb-2">
+                                                        <i class="bi bi-circle-fill text-success me-2"></i>
+                                                        <strong>Total Quantity:</strong> {{ pr_items|sum(attribute='quantity_required') or 0 }}
+                                                    </li>
+                                                    <li class="mb-2">
+                                                        <i class="bi bi-circle-fill text-warning me-2"></i>
+                                                        <strong>To Procure:</strong> {{ pr_items|sum(attribute='quantity_to_procure') or 0 }}
+                                                    </li>
+                                                    <li class="mb-2">
+                                                        <i class="bi bi-circle-fill text-danger me-2"></i>
+                                                        <strong>Total Amount:</strong> ₹{{ "%.2f"|format(pr_items|sum(attribute='total_amount') or 0) }}
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PR Items -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="text-primary">Requested Items</h5>
+                            {% if pr_items %}
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th width="5%">
+                                                {% if pr.status == 'pending' %}
+                                                <input type="checkbox" id="selectAll" class="form-check-input">
+                                                {% endif %}
+                                                Approve?
+                                            </th>
+                                            <th width="3%">#</th>
+                                            <th width="10%">Asset Type</th>
+                                            <th width="8%">Brand</th>
+                                            <th width="10%">Vendor</th>
+                                            <th width="15%">Configuration</th>
+                                            <th width="8%">Quantity Required</th>
+                                            <th width="8%">Stock Available</th>
+                                            <th width="8%">Quantity to Procure</th>
+                                            <th width="8%">Unit Cost</th>
+                                            <th width="8%">Total Amount</th>
+                                            <th width="8%">System Recommended</th>
+                                            <th width="8%">Recommended</th>
+                                            <th width="10%">Reason</th>
+                                            <th width="10%">Approval Justification</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in pr_items %}
+                                        <tr>
+                                            <td>
+                                                {% if pr.status == 'pending' %}
+                                                <input type="checkbox" name="approve_item_{{ item.id }}" class="form-check-input item-checkbox" value="{{ item.id }}">
+                                                {% else %}
+                                                <i class="fas fa-check text-success"></i>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ loop.index }}</td>
+                                            <td>{{ item.asset_type_name or 'N/A' }}</td>
+                                            <td>{{ item.brand or 'N/A' }}</td>
+                                            <td>{{ item.vendor or 'N/A' }}</td>
+                                            <td>
+                                                <small>{{ item.configuration or 'N/A' }}</small>
+                                            </td>
+                                            <td class="text-center">{{ item.quantity_required or 0 }}</td>
+                                            <td class="text-center">{{ item.stock_available or 0 }}</td>
+                                            <td class="text-center">{{ item.quantity_to_procure or 0 }}</td>
+                                            <td class="text-right">₹{{ "%.2f"|format(item.unit_cost or 0) }}</td>
+                                            <td class="text-right">₹{{ "%.2f"|format(item.total_amount or 0) }}</td>
+                                            <td class="text-center">
+                                                {% if item.favor == 'Yes' %}
+                                                <span class="badge badge-success">Yes</span>
+                                                {% elif item.favor == 'No' %}
+                                                <span class="badge badge-danger">No</span>
+                                                {% else %}
+                                                <span class="badge badge-secondary">N/A</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if item.favor == 'Yes' %}
+                                                <span class="badge badge-success">Yes</span>
+                                                {% elif item.favor == 'No' %}
+                                                <span class="badge badge-danger">No</span>
+                                                {% else %}
+                                                <span class="badge badge-secondary">N/A</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small>{{ item.favor_reason or 'N/A' }}</small>
+                                            </td>
+                                            <td>
+                                                {% if pr.status == 'pending' %}
+                                                <textarea class="form-control form-control-sm" name="justification_{{ item.id }}" rows="2" placeholder="Enter approval justification..."></textarea>
+                                                {% else %}
+                                                <small>{{ item.approval_justification or 'N/A' }}</small>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {% if pr.status == 'pending' %}
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-success" onclick="approveSelectedItems()">
+                                    <i class="fas fa-check"></i> Approve Selected Items
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="rejectSelectedItems()">
+                                    <i class="fas fa-times"></i> Reject Selected Items
+                                </button>
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div class="alert alert-info">
+                                No items found for this purchase request.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Select all functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+    
+    // Update select all when individual checkboxes change
+    itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(itemCheckboxes).every(cb => cb.checked);
+            const anyChecked = Array.from(itemCheckboxes).some(cb => cb.checked);
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = allChecked;
+                selectAllCheckbox.indeterminate = anyChecked && !allChecked;
+            }
+        });
+    });
+});
+
+function approveSelectedItems() {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) {
+        alert('Please select at least one item to approve.');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to approve ${selectedItems.length} selected item(s)?`)) {
+        submitApproval(selectedItems, 'approved');
+    }
+}
+
+function rejectSelectedItems() {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) {
+        alert('Please select at least one item to reject.');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to reject ${selectedItems.length} selected item(s)?`)) {
+        submitApproval(selectedItems, 'rejected');
+    }
+}
+
+function getSelectedItems() {
+    const selectedItems = [];
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+    
+    itemCheckboxes.forEach(checkbox => {
+        const itemId = checkbox.value;
+        const justification = document.querySelector(`textarea[name="justification_${itemId}"]`).value;
+        selectedItems.push({
+            item_id: itemId,
+            justification: justification
+        });
+    });
+    
+    return selectedItems;
+}
+
+function submitApproval(items, status) {
+    const data = {
+        pr_id: {{ pr.id }},
+        items: items,
+        status: status
+    };
+    
+    fetch('/api/super-admin/approve-items', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Items processed successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while processing the request.');
+    });
+}
+</script>
+{% endblock %}

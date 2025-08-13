@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-tachometer-alt"></i> Super Admin Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- PR Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 cursor-pointer" onclick="window.location.href='/super-admin/pr-pending'">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                PR Pending
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pr_pending }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 cursor-pointer" onclick="window.location.href='/super-admin/pr-approved'">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                PR Approved
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pr_approved }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 cursor-pointer" onclick="window.location.href='/super-admin/pr-requests'">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                PR Requests
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pr_total }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent PRs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Purchase Requests</h6>
+                    <a href="/super-admin/pr-requests" class="btn btn-primary btn-sm">
+                        <i class="fas fa-list"></i> View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_prs %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>PR Number</th>
+                                    <th>Requester</th>
+                                    <th>Status</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pr in recent_prs %}
+                                <tr>
+                                    <td>
+                                        <a href="/super-admin/pr-details/{{ pr.id }}" class="text-primary font-weight-bold">
+                                            {{ pr.pr_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ pr.requester_name }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ 'warning' if pr.status == 'pending' else 'success' if pr.status == 'approved' else 'secondary' }}">
+                                            {{ pr.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ pr.created_at.strftime('%Y-%m-%d %H:%M') if pr.created_at else 'N/A' }}</td>
+                                    <td>
+                                        <a href="/super-admin/pr-details/{{ pr.id }}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {% if pr.status == 'pending' %}
+                                        <a href="/super-admin/approve-pr/{{ pr.id }}" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check"></i> Approve
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No purchase requests found.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.cursor-pointer {
+    cursor: pointer;
+}
+.cursor-pointer:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s;
+}
+</style>
+{% endblock %}
+

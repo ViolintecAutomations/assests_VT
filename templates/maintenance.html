@@ -24,6 +24,7 @@
             <td>{{ m.resolved_at or '-' }}</td>
             <td>
                 <form method="POST" style="display:inline-block">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="maint_id" value="{{ m.id }}">
                     <select name="status" class="form-select form-select-sm d-inline w-auto">
                         <option value="open" {% if m.status == 'open' %}selected{% endif %}>Open</option>

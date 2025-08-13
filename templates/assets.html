@@ -11,12 +11,29 @@
       {% endfor %}
     {% endif %}
   {% endwith %}
-  <h2>Asset Master</h2>
-  <div class="card mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Asset Master</h2>
+    <button type="button" class="btn btn-primary" id="createAssetBtn">
+      <i class="bi bi-plus-circle me-2"></i>Create Asset
+    </button>
+  </div>
+  
+  <div class="card mb-4" id="assetFormCard" style="display: none;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Create New Asset</h5>
+      <button type="button" class="btn-close" id="closeFormBtn" aria-label="Close"></button>
+    </div>
     <div class="card-body">
       <form method="POST">
         {{ form.hidden_tag() }}
         <div class="row">
+          <div class="col-md-2 mb-2">
+            {{ form.asset_number.label(class="form-label") }}
+            {{ form.asset_number(class="form-control") }}
+            {% for error in form.asset_number.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
           <div class="col-md-2 mb-2">
             {{ form.serial_number.label(class="form-label") }}
             {{ form.serial_number(class="form-control") }}
@@ -25,19 +42,190 @@
             {% endfor %}
           </div>
           <div class="col-md-2 mb-2">
-            {{ form.brand.label(class="form-label") }}
-            {{ form.brand(class="form-control") }}
+            <label for="brandDropdownBtn" class="form-label">Brand</label>
+            <div class="input-group position-relative" style="position:relative;">
+              <button type="button" class="form-control text-start" id="brandDropdownBtn" autocomplete="off">
+                <span id="selectedBrandText">Select</span>
+              </button>
+              <ul class="dropdown-menu w-100" id="brandDropdownMenu" style="max-height:200px;overflow-y:auto;position:absolute;top:100%;left:0;z-index:1050;display:none;">
+                <!-- Brands will be loaded here -->
+              </ul>
+              <input type="hidden" name="brand" id="brandHiddenInput" required>
+
+            </div>
             {% for error in form.brand.errors %}
               <div class="text-danger small">{{ error }}</div>
             {% endfor %}
           </div>
-          <div class="col-md-2 mb-2">
-            {{ form.model.label(class="form-label") }}
-            {{ form.model(class="form-control") }}
-            {% for error in form.model.errors %}
+          <div class="col-md-12 mb-3">
+            {{ form.asset_type.label(class="form-label") }}
+            <div class="asset-type-buttons">
+              <button type="button" class="btn btn-outline-primary asset-type-btn" data-type="laptop">
+                <i class="fas fa-laptop me-2"></i>Laptop
+              </button>
+              <button type="button" class="btn btn-outline-primary asset-type-btn" data-type="mouse">
+                <i class="fas fa-mouse me-2"></i>Mouse
+              </button>
+              <button type="button" class="btn btn-outline-primary asset-type-btn" data-type="keyboard">
+                <i class="fas fa-keyboard me-2"></i>Keyboard
+              </button>
+              <button type="button" class="btn btn-outline-primary asset-type-btn" data-type="printer">
+                <i class="fas fa-print me-2"></i>Printer
+              </button>
+              <button type="button" class="btn btn-outline-primary asset-type-btn" data-type="system">
+                <i class="fas fa-desktop me-2"></i>System
+              </button>
+              <button type="button" class="btn btn-outline-primary asset-type-btn" data-type="others">
+                <i class="fas fa-cube me-2"></i>Others
+              </button>
+            </div>
+            <input type="hidden" name="asset_type" id="assetTypeHiddenInput" required>
+            {% for error in form.asset_type.errors %}
               <div class="text-danger small">{{ error }}</div>
             {% endfor %}
           </div>
+          
+          <!-- Asset Type Specific Fields -->
+          <!-- Laptop Specific Fields -->
+          <div class="col-md-2 mb-2 laptop-fields" style="display: none;">
+            <label for="processor" class="form-label">Processor</label>
+            <select class="form-control" id="processor" name="processor">
+              <option value="">Select Processor</option>
+              <option value="Intel i3">Intel i3</option>
+              <option value="Intel i5">Intel i5</option>
+              <option value="Intel i7">Intel i7</option>
+              <option value="Intel i9">Intel i9</option>
+              <option value="AMD Ryzen 3">AMD Ryzen 3</option>
+              <option value="AMD Ryzen 5">AMD Ryzen 5</option>
+              <option value="AMD Ryzen 7">AMD Ryzen 7</option>
+              <option value="AMD Ryzen 9">AMD Ryzen 9</option>
+              <option value="Intel Core M">Intel Core M</option>
+              <option value="Intel Pentium">Intel Pentium</option>
+              <option value="Intel Celeron">Intel Celeron</option>
+              <option value="Apple M1">Apple M1</option>
+              <option value="Apple M2">Apple M2</option>
+              <option value="Apple M3">Apple M3</option>
+            </select>
+          </div>
+          
+          <!-- Mouse Specific Fields -->
+          <div class="col-md-2 mb-2 mouse-fields" style="display: none;">
+            <label for="mouseType" class="form-label">Type</label>
+            <select class="form-control" id="mouseType" name="mouse_type">
+              <option value="">Select Type</option>
+              <option value="wired">Wired</option>
+              <option value="wireless">Wireless</option>
+            </select>
+          </div>
+          
+          <!-- Keyboard Specific Fields -->
+          <div class="col-md-2 mb-2 keyboard-fields" style="display: none;">
+            <label for="keyboardType" class="form-label">Type</label>
+            <select class="form-control" id="keyboardType" name="keyboard_type">
+              <option value="">Select Type</option>
+              <option value="mechanical">Mechanical</option>
+              <option value="membrane">Membrane</option>
+              <option value="scissor">Scissor Switch</option>
+            </select>
+          </div>
+          <div class="col-md-2 mb-2 keyboard-fields" style="display: none;">
+            <label for="keyboardConnection" class="form-label">Connection</label>
+            <select class="form-control" id="keyboardConnection" name="keyboard_connection">
+              <option value="">Select Connection</option>
+              <option value="wired">Wired</option>
+              <option value="wireless">Wireless</option>
+            </select>
+          </div>
+          
+          <!-- Printer Specific Fields -->
+          <div class="col-md-2 mb-2 printer-fields" style="display: none;">
+            <label for="printerType" class="form-label">Type</label>
+            <select class="form-control" id="printerType" name="printer_type">
+              <option value="">Select Type</option>
+              <option value="inkjet">Inkjet</option>
+              <option value="laser">Laser</option>
+            </select>
+          </div>
+          <div class="col-md-2 mb-2 printer-fields" style="display: none;">
+            <label for="printerFunction" class="form-label">Function</label>
+            <select class="form-control" id="printerFunction" name="printer_function">
+              <option value="">Select Function</option>
+              <option value="print">Print</option>
+              <option value="print-scan-copy">Print-Scan-Copy</option>
+            </select>
+          </div>
+          <div class="col-md-2 mb-2 printer-fields" style="display: none;">
+            <label for="printerConnectivity" class="form-label">Connectivity</label>
+            <select class="form-control" id="printerConnectivity" name="printer_connectivity">
+              <option value="">Select Connectivity</option>
+              <option value="usb">USB</option>
+              <option value="wifi">Wi-Fi</option>
+            </select>
+          </div>
+          
+          <!-- System Specific Fields -->
+          <div class="col-md-2 mb-2 system-fields" style="display: none;">
+            <label for="systemType" class="form-label">System Type</label>
+            <select class="form-control" id="systemType" name="system_type">
+              <option value="">Select Type</option>
+              <option value="Desktop">Desktop</option>
+              <option value="Workstation">Workstation</option>
+              <option value="Server">Server</option>
+              <option value="Mini PC">Mini PC</option>
+              <option value="All-in-One">All-in-One</option>
+              <option value="Thin Client">Thin Client</option>
+            </select>
+          </div>
+
+
+          <div class="col-md-2 mb-2">
+            {{ form.invoice_number.label(class="form-label") }}
+            {{ form.invoice_number(class="form-control") }}
+            {% for error in form.invoice_number.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-2 mb-2">
+            <label for="ram" class="form-label">RAM</label>
+            <select class="form-control" id="ram" name="ram">
+              <option value="">Select RAM</option>
+              <option value="4GB">4GB</option>
+              <option value="8GB">8GB</option>
+              <option value="16GB">16GB</option>
+              <option value="32GB">32GB</option>
+              <option value="64GB">64GB</option>
+              <option value="128GB">128GB</option>
+            </select>
+            {% for error in form.ram.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-md-2 mb-2">
+            <label for="rom" class="form-label">ROM</label>
+            <select class="form-control" id="rom" name="rom">
+              <option value="">Select Storage</option>
+              <option value="128GB SSD">128GB SSD</option>
+              <option value="256GB SSD">256GB SSD</option>
+              <option value="512GB SSD">512GB SSD</option>
+              <option value="1TB SSD">1TB SSD</option>
+              <option value="2TB SSD">2TB SSD</option>
+              <option value="4TB SSD">4TB SSD</option>
+              <option value="500GB HDD">500GB HDD</option>
+              <option value="1TB HDD">1TB HDD</option>
+              <option value="2TB HDD">2TB HDD</option>
+              <option value="4TB HDD">4TB HDD</option>
+              <option value="128GB NVMe">128GB NVMe</option>
+              <option value="256GB NVMe">256GB NVMe</option>
+              <option value="512GB NVMe">512GB NVMe</option>
+              <option value="1TB NVMe">1TB NVMe</option>
+              <option value="2TB NVMe">2TB NVMe</option>
+            </select>
+            {% for error in form.rom.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row">
           <div class="col-md-2 mb-2">
             {{ form.purchase_date.label(class="form-label") }}
             {{ form.purchase_date(class="form-control") }}
@@ -52,106 +240,646 @@
               <div class="text-danger small">{{ error }}</div>
             {% endfor %}
           </div>
-          <div class="col-md-2 mb-2">
-            {{ form.asset_type.label(class="form-label") }}
-            {{ form.asset_type(class="form-control") }}
-            {% for error in form.asset_type.errors %}
-              <div class="text-danger small">{{ error }}</div>
-            {% endfor %}
-          </div>
           <div class="col-md-2 mb-2 d-flex align-items-end">{{ form.submit(class="btn btn-primary w-100") }}</div>
         </div>
       </form>
     </div>
   </div>
-  <h4>Asset List</h4>
+  <h3 class="mb-3">Asset List</h3>
   <div class="row mb-3">
-    <div class="col-md-4">
+    <div class="col-md-4 mb-2">
       <label for="assetSearch" class="form-label">Search Assets</label>
-      <input type="text" id="assetSearch" class="form-control" placeholder="Search by serial number, brand, model, type, status...">
+      <input type="text" id="assetSearch" class="form-control" placeholder="Search by serial number, brand, type, status...">
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 mb-2">
       <label for="assetTypeFilter" class="form-label">Filter by Asset Type</label>
       <select id="assetTypeFilter" class="form-select">
         <option value="">All</option>
-        <option value="Laptop">Laptop</option>
-        <option value="Mouse">Mouse</option>
-        <option value="Keyboard">Keyboard</option>
-        <option value="System">System</option>
-        <option value="Others">Others</option>
+        <!-- Asset types will be loaded dynamically -->
       </select>
     </div>
+
   </div>
-  <table class="table table-bordered table-striped" id="assetTable">
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped" id="assetTable">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Serial Number</th>
-        <th>Brand</th>
-        <th>Model</th>
-        <th>Type</th>
-        <th>Status</th>
-        <th>Purchase Date</th>
-        <th>Warranty Expiry</th>
-        <th>Actions</th>
+        <th style="width: 3%;">ID</th>
+        <th style="width: 8%;">Asset Number</th>
+        <th style="width: 10%;">Serial Number</th>
+        <th style="width: 8%;">Brand</th>
+        <th style="width: 8%;">Invoice Number</th>
+        <th style="width: 12%;">Type Details</th>
+        <th style="width: 6%;">RAM</th>
+        <th class="rom-column" style="width: 6%;">ROM</th>
+        <th style="width: 8%;">Asset Type</th>
+        <th style="width: 8%;">Status</th>
+        <th style="width: 8%;">Purchase Date</th>
+        <th style="width: 8%;">Warranty Expiry</th>
+        <th style="width: 15%;">Actions</th>
       </tr>
     </thead>
     <tbody>
-      {% for asset in assets %}
-      <tr>
-        <td>{{ asset.id }}</td>
-        <td>{{ asset.serial_number }}</td>
-        <td>{{ asset.brand }}</td>
-        <td>{{ asset.model }}</td>
-        <td class="asset-type" data-asset-type="{{ asset.asset_type }}">{{ asset.asset_type }}</td>
-        <td>{{ asset.status }}</td>
-        <td>{{ asset.purchase_date }}</td>
-        <td>{{ asset.warranty_expiry }}</td>
-        <td>
-          <a href="/assets/edit/{{ asset.id }}" class="btn btn-sm btn-warning">Edit</a>
-          <form method="POST" action="/assets/delete/{{ asset.id }}" style="display:inline-block" onsubmit="return confirm('Delete this asset?');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-          </form>
-        </td>
-      </tr>
+      {% if assets %}
+        {% for asset in assets %}
+        <tr>
+          <td>{{ asset.id or '-' }}</td>
+          <td>{{ asset.asset_number or '-' }}</td>
+          <td>{{ asset.serial_number or '-' }}</td>
+          <td>{{ asset.brand or '-' }}</td>
+          <td>{{ asset.invoice_number or '-' }}</td>
+          <td>
+            {% if asset.asset_type and asset.asset_type.lower() in ['mouse'] and asset.mouse_type %}
+              {{ asset.mouse_type }}
+            {% elif asset.asset_type and asset.asset_type.lower() in ['keyboard'] and asset.keyboard_type %}
+              {{ asset.keyboard_type }}{% if asset.keyboard_connection %}, {{ asset.keyboard_connection }}{% endif %}
+            {% elif asset.asset_type and asset.asset_type.lower() in ['printer'] and asset.printer_type %}
+              {{ asset.printer_type }}{% if asset.printer_function %}, {{ asset.printer_function }}{% endif %}{% if asset.printer_connectivity %}, {{ asset.printer_connectivity }}{% endif %}
+            {% elif asset.asset_type and asset.asset_type.lower() in ['laptop'] and asset.processor %}
+              {{ asset.processor }}
+            {% elif asset.asset_type and asset.asset_type.lower() in ['system', 'systems'] and asset.system_type %}
+              {{ asset.system_type }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>{{ asset.ram or '-' }}</td>
+          <td class="rom-column">{% if asset.asset_type and asset.asset_type.lower() in ['printer'] %}-{% else %}{{ asset.rom or '-' }}{% endif %}</td>
+          <td class="asset-type" data-asset-type="{{ asset.asset_type }}">{{ asset.asset_type or '-' }}</td>
+          <td>{{ asset.status or '-' }}</td>
+          <td>{{ asset.purchase_date or '-' }}</td>
+          <td>{{ asset.warranty_expiry or '-' }}</td>
+          <td>
+            <div class="d-flex flex-column gap-1">
+              <a href="/assets/edit/{{ asset.id }}" class="btn btn-sm btn-warning" title="Edit Asset">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="POST" action="/assets/delete/{{ asset.id }}" style="display:inline-block" onsubmit="return confirm('Delete this asset?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-danger" title="Delete Asset">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
       {% else %}
-      <tr><td colspan="9" class="text-center">No assets found.</td></tr>
-      {% endfor %}
+        <tr><td colspan="13" class="text-center">No assets found.</td></tr>
+      {% endif %}
     </tbody>
   </table>
+  </div>
 </div>
+
+<style>
+.custom-dropdown { position: relative; }
+.custom-dropdown .dropdown-menu { max-height: 200px; overflow-y: auto; }
+
+#assetFormCard {
+  transition: all 0.3s ease;
+}
+
+#createAssetBtn {
+  transition: all 0.3s ease;
+}
+
+/* Table improvements */
+.table-responsive {
+  border-radius: 0.375rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+#assetTable {
+  margin-bottom: 0;
+}
+
+#assetTable th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+#assetTable td {
+  font-size: 0.875rem;
+  vertical-align: middle;
+  padding: 0.5rem 0.75rem;
+}
+
+#assetTable .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Ensure text doesn't wrap in cells */
+#assetTable td, #assetTable th {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+/* Allow text wrapping for Type Details column */
+#assetTable td:nth-child(7) {
+  white-space: normal;
+  word-wrap: break-word;
+  max-width: 150px;
+}
+
+/* Center align ID column */
+#assetTable td:first-child, #assetTable th:first-child {
+  text-align: center;
+}
+
+/* Center align Actions column */
+#assetTable td:last-child, #assetTable th:last-child {
+  text-align: center;
+}
+
+/* Ensure consistent cell height */
+#assetTable tr {
+  height: 50px;
+}
+
+
+.asset-type-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.asset-type-buttons .btn {
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+}
+
+.asset-type-buttons .btn i {
+  margin-right: 0.5rem;
+}
+</style>
+<!-- Place script at the very end to ensure DOM is ready and dropdown exists -->
 <script>
-  function filterAssets() {
-    var searchTerm = document.getElementById('assetSearch').value.toLowerCase();
-    var typeFilter = document.getElementById('assetTypeFilter').value.toLowerCase();
-    var rows = document.querySelectorAll('#assetTable tbody tr');
+document.addEventListener('DOMContentLoaded', function() {
+  // Function to toggle ROM column visibility based on asset type
+  function toggleROMColumn() {
+    const assetTypeButtons = document.querySelectorAll('.asset-type-btn');
+    const romColumns = document.querySelectorAll('.rom-column');
     
-    rows.forEach(function(row) {
-      var showRow = true;
-      
-      // Get all text content from the row
-      var rowText = row.textContent.toLowerCase();
-      var typeCell = row.querySelector('td[data-asset-type]');
-      var assetType = typeCell ? typeCell.getAttribute('data-asset-type').toLowerCase() : '';
-      
-      // Apply search filter
-      if (searchTerm && !rowText.includes(searchTerm)) {
-        showRow = false;
-      }
-      
-      // Apply type filter
-      if (typeFilter && assetType !== typeFilter) {
-        showRow = false;
-      }
-      
-      // Show/hide row
-      row.style.display = showRow ? '' : 'none';
+    assetTypeButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const assetType = this.getAttribute('data-type');
+        
+        romColumns.forEach(col => {
+          if (assetType.toLowerCase() === 'printer') {
+            col.style.display = '';
+          } else {
+            col.style.display = '';
+          }
+        });
+      });
+    });
+  }
+
+  function loadBrandsDropdown(selectedBrand) {
+    fetch('/api/brands')
+      .then(r => r.json())
+      .then(data => {
+        var menu = document.getElementById('brandDropdownMenu');
+        menu.innerHTML = '';
+        if (data.brands && data.brands.length > 0) {
+          data.brands.forEach(function(brand) {
+            var li = document.createElement('li');
+            li.className = 'd-flex justify-content-between align-items-center px-2';
+            li.style.cursor = 'pointer';
+            var span = document.createElement('span');
+            span.textContent = brand;
+            span.onclick = function() {
+              document.getElementById('selectedBrandText').textContent = brand;
+              document.getElementById('brandHiddenInput').value = brand;
+              menu.style.display = 'none';
+            };
+            li.appendChild(span);
+            menu.appendChild(li);
+          });
+        }
+      });
+  }
+
+  // Dropdown toggle logic
+  var dropdownBtn = document.getElementById('brandDropdownBtn');
+  var menu = document.getElementById('brandDropdownMenu');
+  dropdownBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    // Hide any other open dropdowns
+    document.querySelectorAll('.dropdown-menu').forEach(function(m) {
+      if (m !== menu) m.style.display = 'none';
+    });
+    if (menu.style.display === 'block') {
+      menu.style.display = 'none';
+          } else {
+      menu.style.display = 'block';
+    }
+  });
+  document.addEventListener('click', function(e) {
+    if (!dropdownBtn.contains(e.target) && !menu.contains(e.target)) {
+      menu.style.display = 'none';
+    }
+  });
+
+
+
+  loadBrandsDropdown();
+  toggleROMColumn();
+  
+  // ROM column is now always visible, showing "-" for printers
+  
+  // Create Asset button functionality
+  const createAssetBtn = document.getElementById('createAssetBtn');
+  const assetFormCard = document.getElementById('assetFormCard');
+  const closeFormBtn = document.getElementById('closeFormBtn');
+  
+  if (createAssetBtn && assetFormCard) {
+    createAssetBtn.addEventListener('click', function() {
+      assetFormCard.style.display = 'block';
+      createAssetBtn.style.display = 'none';
     });
   }
   
-  // Add event listeners
-  document.getElementById('assetSearch').addEventListener('input', filterAssets);
-  document.getElementById('assetTypeFilter').addEventListener('change', filterAssets);
+  if (closeFormBtn && assetFormCard) {
+    closeFormBtn.addEventListener('click', function() {
+      assetFormCard.style.display = 'none';
+      createAssetBtn.style.display = 'block';
+      // Reset form
+      document.querySelector('form').reset();
+      // Reset asset type buttons
+      const assetTypeButtons = document.querySelectorAll('.asset-type-btn');
+      assetTypeButtons.forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline-primary');
+      });
+      // Hide all asset type specific fields
+      hideAllAssetTypeFields();
+    });
+  }
+});
+
+// Asset Type Button Functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const assetTypeButtons = document.querySelectorAll('.asset-type-btn');
+  const assetTypeHiddenInput = document.getElementById('assetTypeHiddenInput');
+
+  // Asset type button click handlers
+  assetTypeButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      // Remove active class from all buttons
+      assetTypeButtons.forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline-primary');
+      });
+      
+      // Add active class to clicked button
+      this.classList.remove('btn-outline-primary');
+      this.classList.add('btn-primary');
+      
+      // Get asset type data
+      const assetType = this.getAttribute('data-type');
+      const assetTypeText = this.textContent.trim();
+      
+      // Set the hidden input value
+      if (assetTypeHiddenInput) {
+        assetTypeHiddenInput.value = assetTypeText;
+      }
+      
+      // Trigger asset type change
+      onAssetTypeChange(null, assetTypeText);
+    });
+  });
+});
+
+// Function to handle asset type changes and update related fields
+function onAssetTypeChange(assetTypeId, assetTypeName) {
+  console.log(`Asset type changed to: ${assetTypeName} (ID: ${assetTypeId})`);
+  
+  // Hide all asset type specific fields first
+  hideAllAssetTypeFields();
+  
+  // Show relevant fields based on asset type
+  if (assetTypeName.toLowerCase().includes('laptop')) {
+    showLaptopFields();
+  } else if (assetTypeName.toLowerCase().includes('mouse')) {
+    showMouseFields();
+  } else if (assetTypeName.toLowerCase().includes('keyboard')) {
+    showKeyboardFields();
+  } else if (assetTypeName.toLowerCase().includes('printer')) {
+    showPrinterFields();
+  } else if (assetTypeName.toLowerCase().includes('system')) {
+    showSystemFields();
+  }
+  
+  // Update RAM field based on asset type
+  const ramField = document.getElementById('ram');
+  const romField = document.getElementById('rom');
+  
+  if (assetTypeName.toLowerCase().includes('laptop') || assetTypeName.toLowerCase().includes('system')) {
+    // For laptops and systems, show RAM and ROM fields
+    if (ramField) {
+      ramField.placeholder = 'e.g., 8GB, 16GB';
+      ramField.style.display = 'block';
+      ramField.parentElement.style.display = 'block';
+    }
+    if (romField) {
+      romField.placeholder = 'e.g., 256GB SSD, 512GB SSD';
+      romField.style.display = 'block';
+      romField.parentElement.style.display = 'block';
+    }
+  } else if (assetTypeName.toLowerCase().includes('mouse') || assetTypeName.toLowerCase().includes('keyboard')) {
+    // For peripherals, hide RAM and ROM fields
+    if (ramField) {
+      ramField.value = '';
+      ramField.style.display = 'none';
+      ramField.parentElement.style.display = 'none';
+    }
+    if (romField) {
+      romField.value = '';
+      romField.style.display = 'none';
+      romField.parentElement.style.display = 'none';
+    }
+  } else if (assetTypeName.toLowerCase().includes('printer')) {
+    // For printers, hide both RAM and ROM fields
+    if (ramField) {
+      ramField.value = '';
+      ramField.style.display = 'none';
+      ramField.parentElement.style.display = 'none';
+    }
+    if (romField) {
+      romField.value = '';
+      romField.style.display = 'none';
+      romField.parentElement.style.display = 'none';
+    }
+  } else {
+    // For other asset types, show both fields with generic placeholders
+    if (ramField) {
+      ramField.placeholder = 'Specifications';
+      ramField.style.display = 'block';
+      ramField.parentElement.style.display = 'block';
+    }
+    if (romField) {
+      romField.placeholder = 'Additional specs';
+      romField.style.display = 'block';
+      romField.parentElement.style.display = 'block';
+    }
+  }
+  
+  // Update model field placeholder based on asset type
+  const modelField = document.getElementById('model');
+  if (modelField) {
+    switch (assetTypeName.toLowerCase()) {
+      case 'laptop':
+        modelField.placeholder = 'e.g., Latitude 5520, ThinkPad X1';
+        break;
+      case 'system':
+        modelField.placeholder = 'e.g., OptiPlex 7090, ThinkCentre M90';
+        break;
+      case 'mouse':
+        modelField.placeholder = 'e.g., MX Master 3, G502';
+        break;
+      case 'keyboard':
+        modelField.placeholder = 'e.g., MX Keys, G Pro X';
+        break;
+      case 'printer':
+        modelField.placeholder = 'e.g., LaserJet Pro, PIXMA';
+        break;
+      case 'camera':
+        modelField.placeholder = 'e.g., EOS R5, A7 III';
+        break;
+      default:
+        modelField.placeholder = 'Enter model name';
+    }
+  }
+  
+  // Update brand suggestions based on asset type
+  updateBrandSuggestions(assetTypeName);
+}
+
+// Function to update brand suggestions based on asset type
+function updateBrandSuggestions(assetTypeName) {
+  const brandDropdownBtn = document.getElementById('brandDropdownBtn');
+  const selectedBrandText = document.getElementById('selectedBrandText');
+  
+  // Clear current selection when asset type changes
+  if (selectedBrandText) {
+    selectedBrandText.textContent = 'Select';
+  }
+  if (document.getElementById('brandHiddenInput')) {
+    document.getElementById('brandHiddenInput').value = '';
+  }
+  
+  // Load brands and prioritize based on asset type
+  fetch('/api/brands')
+    .then(r => r.json())
+    .then(data => {
+      const menu = document.getElementById('brandDropdownMenu');
+      menu.innerHTML = '';
+      
+      if (data.brands && data.brands.length > 0) {
+        // Sort brands based on asset type relevance
+        let sortedBrands = [...data.brands];
+        
+        if (assetTypeName.toLowerCase().includes('laptop') || assetTypeName.toLowerCase().includes('system')) {
+          // Prioritize laptop/computer brands
+          const computerBrands = ['Dell', 'HP', 'Lenovo', 'Apple', 'Asus', 'Acer'];
+          sortedBrands.sort((a, b) => {
+            const aIndex = computerBrands.indexOf(a);
+            const bIndex = computerBrands.indexOf(b);
+            if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+            return aIndex - bIndex;
+          });
+        } else if (assetTypeName.toLowerCase().includes('mouse') || assetTypeName.toLowerCase().includes('keyboard')) {
+          // Prioritize peripheral brands
+          const peripheralBrands = ['Logitech', 'Razer', 'Corsair', 'SteelSeries'];
+          sortedBrands.sort((a, b) => {
+            const aIndex = peripheralBrands.indexOf(a);
+            const bIndex = peripheralBrands.indexOf(b);
+            if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+            return aIndex - bIndex;
+          });
+        }
+        
+        sortedBrands.forEach(function(brand) {
+          const li = document.createElement('li');
+          li.className = 'd-flex justify-content-between align-items-center px-2';
+          li.style.cursor = 'pointer';
+          
+          const span = document.createElement('span');
+          span.textContent = brand;
+          span.onclick = function() {
+            document.getElementById('selectedBrandText').textContent = brand;
+            document.getElementById('brandHiddenInput').value = brand;
+            menu.style.display = 'none';
+          };
+          li.appendChild(span);
+          menu.appendChild(li);
+        });
+        }
+      });
+  }
+
+
+
+// Function to hide all asset type specific fields
+function hideAllAssetTypeFields() {
+  const fields = document.querySelectorAll('.laptop-fields, .mouse-fields, .keyboard-fields, .printer-fields, .system-fields');
+  fields.forEach(field => {
+    field.style.display = 'none';
+  });
+}
+
+// Function to show laptop specific fields
+function showLaptopFields() {
+  const laptopFields = document.querySelectorAll('.laptop-fields');
+  laptopFields.forEach(field => {
+    field.style.display = 'block';
+  });
+}
+
+// Function to show mouse specific fields
+function showMouseFields() {
+  const mouseFields = document.querySelectorAll('.mouse-fields');
+  mouseFields.forEach(field => {
+    field.style.display = 'block';
+  });
+}
+
+// Function to show keyboard specific fields
+function showKeyboardFields() {
+  const keyboardFields = document.querySelectorAll('.keyboard-fields');
+  keyboardFields.forEach(field => {
+    field.style.display = 'block';
+  });
+}
+
+// Function to show printer specific fields
+function showPrinterFields() {
+  const printerFields = document.querySelectorAll('.printer-fields');
+  printerFields.forEach(field => {
+    field.style.display = 'block';
+  });
+}
+
+// Function to show system specific fields
+function showSystemFields() {
+  const systemFields = document.querySelectorAll('.system-fields');
+  systemFields.forEach(field => {
+    field.style.display = 'block';
+  });
+}
+
+// Asset Search and Filter Functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const assetSearch = document.getElementById('assetSearch');
+  const assetTypeFilter = document.getElementById('assetTypeFilter');
+  const assetTable = document.getElementById('assetTable');
+  const tableRows = assetTable.querySelectorAll('tbody tr');
+
+  // Load asset types for filter dropdown
+  function loadAssetTypeFilter() {
+    fetch('/api/asset_types')
+      .then(r => r.json())
+      .then(data => {
+        if (data.types && data.types.length > 0) {
+          data.types.forEach(function(type) {
+            const option = document.createElement('option');
+            option.value = type.name;
+            option.textContent = type.name;
+            assetTypeFilter.appendChild(option);
+          });
+        }
+      });
+  }
+
+  function filterAssets() {
+    const searchTerm = assetSearch.value.toLowerCase();
+    const selectedType = assetTypeFilter.value;
+
+    tableRows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length === 0) return; // Skip empty rows
+
+      // Updated column indices for new table structure (removed Model column)
+      const assetNumber = cells[1].textContent.toLowerCase();
+      const serialNumber = cells[2].textContent.toLowerCase();
+      const brand = cells[3].textContent.toLowerCase();
+      const invoiceNumber = cells[4].textContent.toLowerCase();
+      const typeDetails = cells[5].textContent.toLowerCase();
+      const ram = cells[6].textContent.toLowerCase();
+      const rom = cells[7].textContent.toLowerCase();
+      const assetType = cells[8].textContent.toLowerCase();
+      const status = cells[9].textContent.toLowerCase();
+      const purchaseDate = cells[10].textContent.toLowerCase();
+      const warrantyExpiry = cells[11].textContent.toLowerCase();
+
+      // Check if row matches search term
+      const matchesSearch = searchTerm === '' || 
+        assetNumber.includes(searchTerm) ||
+        serialNumber.includes(searchTerm) || 
+        brand.includes(searchTerm) || 
+        invoiceNumber.includes(searchTerm) ||
+        typeDetails.includes(searchTerm) ||
+        ram.includes(searchTerm) ||
+        rom.includes(searchTerm) ||
+        assetType.includes(searchTerm) || 
+        status.includes(searchTerm) ||
+        purchaseDate.includes(searchTerm) ||
+        warrantyExpiry.includes(searchTerm);
+
+      // Check if row matches asset type filter
+      const matchesType = selectedType === '' || assetType === selectedType.toLowerCase();
+
+      // Show/hide row based on both filters
+      if (matchesSearch && matchesType) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Show "No assets found" message if all rows are hidden
+    const visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+    const noAssetsRow = assetTable.querySelector('tbody tr td[colspan="13"]');
+    
+    if (visibleRows.length === 0) {
+      if (!noAssetsRow) {
+        const tbody = assetTable.querySelector('tbody');
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = '<td colspan="13" class="text-center">No assets found matching your search criteria.</td>';
+        tbody.appendChild(newRow);
+      }
+    } else {
+      if (noAssetsRow) {
+        noAssetsRow.parentElement.remove();
+      }
+    }
+  }
+
+  // Add event listeners for search and filter
+  if (assetSearch) {
+    assetSearch.addEventListener('input', filterAssets);
+  }
+  
+  if (assetTypeFilter) {
+    assetTypeFilter.addEventListener('change', filterAssets);
+  }
+
+  // Load asset types for filter dropdown
+  loadAssetTypeFilter();
+  });
 </script>
 {% endblock %} 
