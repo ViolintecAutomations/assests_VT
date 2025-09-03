@@ -9,7 +9,9 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import json
+from DB_Connection import get_db_connection
 
+Curr_Proj_Name = 'Assert_IT'
 procurement_bp = Blueprint('procurement', __name__)
 
 def get_db_connection():
@@ -23,7 +25,7 @@ def get_db_connection():
     )
 
 def recalculate_total_amount(pr_id):
-    conn = get_db_connection()
+    conn = get_db_connection(Curr_Proj_Name)
     cur = conn.cursor()
     cur.execute('SELECT SUM(unit_cost * quantity_to_procure) as total FROM pr_items WHERE pr_id = %s', (pr_id,))
     result = cur.fetchone()
@@ -35,7 +37,7 @@ def recalculate_total_amount(pr_id):
 
 def recalculate_approved_total_amount(pr_id):
     """Recalculate total amount based on only approved items"""
-    conn = get_db_connection()
+    conn = get_db_connection(Curr_Proj_Name)
     cur = conn.cursor()
     
     # Calculate total from only approved items
@@ -62,10 +64,10 @@ def recalculate_approved_total_amount(pr_id):
 def get_vendors():
     """Get all vendors"""
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
-        cur.execute('SELECT DISTINCT name FROM vendors ORDER BY name')
-        vendors = [row['name'] for row in cur.fetchall()]
+        cur.execute('SELECT id, name FROM vendors ORDER BY name')
+        vendors = [{'id': row['id'], 'name': row['name']} for row in cur.fetchall()]
         cur.close()
         conn.close()
         return jsonify({'vendors': vendors})
@@ -82,7 +84,7 @@ def add_vendor():
         if not vendor_name:
             return jsonify({'success': False, 'error': 'Vendor name is required'}), 400
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Check if vendor already exists
@@ -128,7 +130,7 @@ def create_purchase_request():
         # Generate PR number
         pr_number = f"PR{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Create PR
@@ -168,12 +170,12 @@ def create_purchase_request():
             
             cur.execute('''
                 INSERT INTO pr_items (pr_id, asset_type_id, brand, vendor, configuration, unit_cost, 
-                                    quantity_required, department_split, stock_available, quantity_to_procure, favor, favor_reason)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    quantity_required, department_split, stock_available, quantity_to_procure, favor, favor_reason, reason_not_using_stock)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (pr_id, item['asset_type_id'], item.get('brand', ''), item.get('vendor', ''), 
                   item.get('configuration', ''), item['unit_cost'], item['quantity_required'], 
                   json.dumps(item.get('department_split', {})), stock_available, quantity_to_procure, 
-                  item.get('favor', 'No'), item.get('favor_reason', '')))
+                  item.get('favor', 'No'), item.get('favor_reason', ''), item.get('stock_reason', '')))
             
             print(f"DEBUG: Inserted item {i} with stock_available={stock_available}, quantity_to_procure={quantity_to_procure}")  # Debug log
         
@@ -254,7 +256,7 @@ def get_purchase_requests():
     try:
         status = request.args.get('status')
         limit = request.args.get('limit', type=int)
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Use a subquery to get the latest approval record for each PR
@@ -339,7 +341,7 @@ def get_purchase_requests():
 def get_purchase_request(pr_id):
     """Get specific purchase request with items"""
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Get PR details
@@ -420,7 +422,7 @@ def approve_purchase_request(pr_id):
         
         print(f"DEBUG: Approving PR {pr_id} with status: {status}")  # Debug log
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # First, check if PR exists
@@ -538,7 +540,7 @@ def approve_purchase_request_items(pr_id):
         print(f"DEBUG: Approved items: {approved_items}")  # Debug log
         print(f"DEBUG: Rejected items: {rejected_items}")  # Debug log
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # First, check if PR exists
@@ -600,6 +602,13 @@ def approve_purchase_request_items(pr_id):
             if item_justification:
                 combined_notes = item_justification
             
+            # Update the is_approved field in pr_items table
+            cur.execute('''
+                UPDATE pr_items 
+                SET is_approved = 1, approved_at = NOW()
+                WHERE id = %s
+            ''', (item_id,))
+            
             # Check if item approval record exists
             cur.execute('SELECT id FROM item_approvals WHERE pr_item_id = %s', (item_id,))
             existing_approval = cur.fetchone()
@@ -620,6 +629,13 @@ def approve_purchase_request_items(pr_id):
         
         # Process rejected items
         for item_id in rejected_items:
+            # Update the is_approved field in pr_items table
+            cur.execute('''
+                UPDATE pr_items 
+                SET is_approved = 0, approved_at = NULL
+                WHERE id = %s
+            ''', (item_id,))
+            
             # Check if item approval record exists
             cur.execute('SELECT id FROM item_approvals WHERE pr_item_id = %s', (item_id,))
             existing_approval = cur.fetchone()
@@ -716,7 +732,7 @@ def check_stock():
         except (ValueError, TypeError):
             return jsonify({'success': False, 'error': 'asset_type_id must be a valid number'}), 400
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Get asset type name from id
@@ -765,7 +781,7 @@ def create_purchase_order():
         file_path = os.path.join(upload_folder, filename)
         po_file.save(file_path)
         # Insert PO into DB
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         cur.execute('''
             INSERT INTO purchase_orders (pr_id, po_number, po_date, expected_delivery_date, po_file_path, vendor_name)
@@ -796,7 +812,7 @@ def get_purchase_orders():
     """
     try:
         status = request.args.get('status')
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
 
         if status == 'open':
@@ -845,7 +861,7 @@ def get_purchase_orders():
 def get_purchase_order_details(po_id):
     """Get detailed information about a specific purchase order including quantity summaries"""
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Get PO details with PR information
@@ -941,7 +957,7 @@ def create_delivery():
     try:
         data = request.get_json()
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Insert delivery using schema-aware column detection
@@ -996,7 +1012,7 @@ def create_delivery_with_assets():
     try:
         data = request.get_json()
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Get PO and PR details
@@ -1224,7 +1240,7 @@ def create_invoice():
         invoice_date = datetime.strptime(data['invoice_date'], '%Y-%m-%d')
         payment_due_date = invoice_date + timedelta(days=30)
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         cur.execute('''
@@ -1257,7 +1273,7 @@ def update_payment(invoice_id):
     try:
         data = request.get_json()
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         cur.execute('''
@@ -1282,7 +1298,7 @@ def update_payment(invoice_id):
 def get_invoices():
     """Get all invoices"""
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         cur.execute('''
@@ -1319,7 +1335,7 @@ def update_asset_fields(asset_id: int):
         serial_number = data.get('serial_number')
         warranty_expiry = data.get('warranty_expiry')  # Expected format YYYY-MM-DD
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         assets_columns = _get_table_columns(cur, 'assets')
@@ -1534,8 +1550,8 @@ def send_pr_email(to_email, pr_data):
         print(f"DEBUG: To email: {to_email}")  # DEBUG
         print(f"DEBUG: Asset types: {[item.get('asset_type_name', 'Unknown') for item in pr_data.get('items', [])]}")  # DEBUG
         
-        gmail_user = 'harishrajangam48@gmail.com'
-        gmail_password = 'wqjd gjjc ulbw pbxc'
+        gmail_user = 'sapnoreply@violintec.com'
+        gmail_password = 'VT$ofT@$2025'
 
         msg = MIMEMultipart()
         msg['From'] = gmail_user
@@ -1806,12 +1822,49 @@ def send_pr_email(to_email, pr_data):
         msg.attach(MIMEText(html_content, 'html'))
 
         # Send email
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(gmail_user, gmail_password)
-        text = msg.as_string()
-        server.sendmail(gmail_user, to_email, text)
-        server.quit()
+        try:
+            print(f"🔧 Attempting to send PR email using: {gmail_user}")
+            # Try multiple SMTP servers for business domains
+            smtp_servers = [
+                ('smtp.violintec.com', 587),
+                ('smtp.office365.com', 587),
+                ('smtp.gmail.com', 587),
+                ('smtp-mail.outlook.com', 587)
+            ]
+            
+            success = False
+            for smtp_server, port in smtp_servers:
+                try:
+                    print(f"🔧 Trying SMTP server: {smtp_server}:{port}")
+                    server = smtplib.SMTP(smtp_server, port)
+                    server.starttls()
+                    print(f"🔧 TLS started successfully with {smtp_server}")
+                    server.login(gmail_user, gmail_password)
+                    print(f"🔧 Login successful with {smtp_server}")
+                    text = msg.as_string()
+                    server.sendmail(gmail_user, to_email, text)
+                    server.quit()
+                    print(f"✅ PR email sent via {smtp_server}")
+                    success = True
+                    break
+                    
+                except smtplib.SMTPAuthenticationError as e:
+                    print(f"❌ SMTP Authentication Error with {smtp_server}: {e}")
+                    continue
+                except smtplib.SMTPException as e:
+                    print(f"❌ SMTP Error with {smtp_server}: {e}")
+                    continue
+                except Exception as e:
+                    print(f"❌ Error with {smtp_server}: {e}")
+                    continue
+            
+            if not success:
+                print("❌ Failed to send PR email with all SMTP servers")
+                raise Exception("Failed to send email with all SMTP servers")
+                
+        except Exception as e:
+            print(f"❌ Error sending PR email: {e}")
+            raise
         
         print(f"DEBUG: Email sent successfully to {to_email}")  # DEBUG
         
@@ -1833,7 +1886,7 @@ def pr_approval_response():
     if not pr_id or decision not in ['approved', 'not_approved']:
         print(f"ERROR: Invalid approval link parameters: pr_id={pr_id}, decision={decision}")
         return render_template_string('<h2>Invalid approval link.</h2>'), 400
-    conn = get_db_connection()
+    conn = get_db_connection(Curr_Proj_Name)
     cur = conn.cursor()
     try:
         print(f"DEBUG: Looking for PR with id: {pr_id}")
@@ -1935,7 +1988,7 @@ def add_user():
     if not email:
         return jsonify({'success': False, 'error': 'Email required'}), 400
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         # Check if user exists
         cur.execute('SELECT id FROM users WHERE email = %s', (email,))
@@ -1975,7 +2028,7 @@ def api_send_pr_email():
 def debug_approvals():
     """Debug endpoint to check approval status for all PRs"""
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Get all PRs with their approval status
@@ -2027,7 +2080,7 @@ def debug_approvals():
 def fix_missing_approvals():
     """Create missing approval records for PRs that don't have them"""
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Find PRs without approval records
@@ -2074,11 +2127,20 @@ def fix_missing_approvals():
 
 @procurement_bp.route('/api/approval_list', methods=['GET'])
 def api_approval_list():
-    """Return all approvals with PR and user info for the Approvals screen, with optional status filter"""
+    """Return only approved PRs for the Approvals screen, with cleanup of duplicate pending entries"""
     try:
         status = request.args.get('status')
-        conn = get_db_connection()
+        
+        # Perform cleanup to remove duplicate pending entries
+        cleanup_result = cleanup_mixed_status_prs()
+        deleted_count = cleanup_result[0]
+        deleted_items_count = cleanup_result[1]
+        deleted_approvals_count = cleanup_result[2]
+        
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
+        
+        # Modified query to show only approved PRs and exclude pending duplicates
         sql = '''
             SELECT 
                 a.id as approval_id,
@@ -2097,7 +2159,12 @@ def api_approval_list():
                 GROUP_CONCAT(DISTINCT po.po_date SEPARATOR ', ') as po_dates,
                 GROUP_CONCAT(DISTINCT po.vendor_name SEPARATOR ', ') as vendor_names,
                 GROUP_CONCAT(DISTINCT po.expected_delivery_date SEPARATOR ', ') as expected_delivery_dates,
-                GROUP_CONCAT(DISTINCT po.po_file_path SEPARATOR ', ') as po_file_paths
+                GROUP_CONCAT(DISTINCT po.po_file_path SEPARATOR ', ') as po_file_paths,
+                (
+                    SELECT SUM(pri2.unit_cost * pri2.quantity_to_procure)
+                    FROM pr_items pri2
+                    WHERE pri2.pr_id = pr.id AND pri2.is_approved = 1
+                ) as pr_total_amount
             FROM approvals a
             LEFT JOIN purchase_requests pr ON a.pr_id = pr.id
             LEFT JOIN users u ON pr.requested_by = u.id
@@ -2105,20 +2172,45 @@ def api_approval_list():
             LEFT JOIN pr_items pri ON pr.id = pri.pr_id
             LEFT JOIN asset_types at ON pri.asset_type_id = at.id
             LEFT JOIN purchase_orders po ON pr.id = po.pr_id
+            WHERE a.status IN ('approved', 'delivered')
         '''
         params = []
+        
+        # If specific status filter is requested, apply it
         if status:
-            sql += ' WHERE a.status = %s'
-            params.append(status)
-        sql += ' GROUP BY a.id ORDER BY pr.created_at DESC, a.approval_date DESC, a.id DESC'
+            if status == 'approved':
+                sql += ' AND a.status IN ("approved", "delivered")'
+            elif status == 'pending':
+                # Don't show pending items - they should be cleaned up
+                sql += ' AND 1=0'  # This will return no results
+            elif status == 'rejected':
+                sql += ' AND a.status = "rejected"'
+        
+        sql += ' GROUP BY pr.id, a.id ORDER BY pr.created_at DESC, a.approval_date DESC, a.id DESC'
         cur.execute(sql, tuple(params))
         approvals = cur.fetchall()
+        
         for row in approvals:
             if row.get('approval_date'):
                 row['approval_date'] = row['approval_date'].isoformat() if hasattr(row['approval_date'], 'isoformat') else str(row['approval_date'])
+            # Ensure total amounts are numeric
+            if row.get('total_amount'):
+                row['total_amount'] = float(row['total_amount'])
+            if row.get('pr_total_amount'):
+                row['pr_total_amount'] = float(row['pr_total_amount'])
+        
         cur.close()
         conn.close()
-        return jsonify({'success': True, 'approvals': approvals})
+        
+        return jsonify({
+            'success': True, 
+            'approvals': approvals,
+            'cleanup_info': {
+                'deleted_pending_approvals': deleted_count,
+                'deleted_pending_items': deleted_items_count,
+                'deleted_pending_approvals_table': deleted_approvals_count
+            }
+        })
     except Exception as e:
         print('ERROR in api_approval_list:', e)
         import traceback
@@ -2130,7 +2222,7 @@ def api_approval_list():
 def approve_pr_page(pr_id):
     """Page to approve a purchase request via email link"""
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Get PR details
@@ -2524,12 +2616,17 @@ def pr_details_page(pr_id):
     """Display detailed view of a specific PR"""
     try:
         print(f"DEBUG: Loading PR details for PR ID: {pr_id}")
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
-        # Get PR details
+        # Get PR details with approved total amount
         cur.execute('''
-            SELECT pr.*, u.name as requester_name, u.email as requester_email
+            SELECT pr.*, u.name as requester_name, u.email as requester_email,
+                   (
+                       SELECT SUM(pri2.unit_cost * pri2.quantity_to_procure)
+                       FROM pr_items pri2
+                       WHERE pri2.pr_id = pr.id AND pri2.is_approved = 1
+                   ) as approved_total_amount
             FROM purchase_requests pr
             LEFT JOIN users u ON pr.requested_by = u.id
             WHERE pr.id = %s
@@ -2574,15 +2671,30 @@ def pr_details_page(pr_id):
                     it['configuration'] = ', '.join(parts)
         print(f"DEBUG: Found {len(pr_items)} PR items")
         
-        # Get approval details
+        # Get approval details - get the latest approved approval
         cur.execute('''
             SELECT a.*, u.name as approver_name, u.email as approver_email
             FROM approvals a
             LEFT JOIN users u ON a.approver_id = u.id
-            WHERE a.pr_id = %s
+            WHERE a.pr_id = %s AND a.status = 'approved'
+            ORDER BY a.approval_date DESC
+            LIMIT 1
         ''', (pr_id,))
         approval_data = cur.fetchone()
         print(f"DEBUG: Approval data: {approval_data}")
+        
+        # If no approved approval found, get any approval for status display
+        if not approval_data:
+            cur.execute('''
+                SELECT a.*, u.name as approver_name, u.email as approver_email
+                FROM approvals a
+                LEFT JOIN users u ON a.approver_id = u.id
+                WHERE a.pr_id = %s
+                ORDER BY a.approval_date DESC
+                LIMIT 1
+            ''', (pr_id,))
+            approval_data = cur.fetchone()
+            print(f"DEBUG: Fallback approval data: {approval_data}")
         
         # Get PO details if exists
         cur.execute('''
@@ -2612,7 +2724,7 @@ def search_approved_prs():
     try:
         search_term = request.args.get('search', '').strip()
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Build the query to get approved PRs with search functionality
@@ -2659,7 +2771,7 @@ def search_approved_prs():
 def get_purchase_request_by_number(pr_number):
     """Get PR details by PR number for upload PO form"""
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Get PR details
@@ -2749,12 +2861,20 @@ def get_purchase_request_by_number(pr_number):
 
 @procurement_bp.route('/api/approved_items', methods=['GET'])
 def api_approved_items():
-    """Return only the approved items for the Approvals screen"""
+    """Return only the approved items for the Approvals screen with cleanup logic"""
     try:
         status = request.args.get('status', 'approved')
-        conn = get_db_connection()
+        
+        # Perform cleanup
+        cleanup_result = cleanup_mixed_status_prs()
+        deleted_count = cleanup_result[0]
+        deleted_items_count = cleanup_result[1]
+        deleted_approvals_count = cleanup_result[2]
+        
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
+        # Now get approved items with total amounts
         sql = '''
             SELECT 
                 ia.id as item_approval_id,
@@ -2777,35 +2897,135 @@ def api_approved_items():
                 au.name as approver_name,
                 au.email as approver_email,
                 ia.approval_date,
-                ia.notes
+                ia.notes,
+                (
+                    SELECT SUM(pri2.unit_cost * pri2.quantity_to_procure)
+                    FROM pr_items pri2
+                    WHERE pri2.pr_id = pr.id AND pri2.is_approved = 1
+                ) as pr_total_amount
             FROM item_approvals ia
             LEFT JOIN pr_items pri ON ia.pr_item_id = pri.id
             LEFT JOIN purchase_requests pr ON pri.pr_id = pr.id
             LEFT JOIN users u ON pr.requested_by = u.id
             LEFT JOIN users au ON ia.approver_id = au.id
             LEFT JOIN asset_types at ON pri.asset_type_id = at.id
+            WHERE ia.status = 'approved'
+            ORDER BY ia.approval_date DESC, pr.created_at DESC, ia.id DESC
         '''
-        params = []
-        if status:
-            sql += ' WHERE ia.status = %s'
-            params.append(status)
-        sql += ' ORDER BY ia.approval_date DESC, pr.created_at DESC, ia.id DESC'
         
-        cur.execute(sql, tuple(params))
+        cur.execute(sql)
         approved_items = cur.fetchall()
         
         for row in approved_items:
             if row.get('approval_date'):
                 row['approval_date'] = row['approval_date'].isoformat() if hasattr(row['approval_date'], 'isoformat') else str(row['approval_date'])
+            # Ensure total amounts are numeric
+            if row.get('total_amount'):
+                row['total_amount'] = float(row['total_amount'])
+            if row.get('pr_total_amount'):
+                row['pr_total_amount'] = float(row['pr_total_amount'])
         
         cur.close()
         conn.close()
-        return jsonify({'success': True, 'approved_items': approved_items})
+        return jsonify({
+            'success': True, 
+            'approved_items': approved_items,
+            'cleanup_info': {
+                'deleted_pending_approvals': deleted_count,
+                'deleted_pending_items': deleted_items_count,
+                'deleted_pending_approvals_table': deleted_approvals_count
+            }
+        })
     except Exception as e:
         print('ERROR in api_approved_items:', e)
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 400
+
+def cleanup_mixed_status_prs():
+    """Clean up pending rows for PRs that have approved items and remove duplicate pending entries"""
+    conn = get_db_connection(Curr_Proj_Name)
+    cur = conn.cursor()
+    
+    try:
+        # Get PRs that have approved items
+        cur.execute('''
+            SELECT DISTINCT pr.id
+            FROM purchase_requests pr
+            INNER JOIN pr_items pri ON pr.id = pri.pr_id
+            WHERE pri.is_approved = 1
+        ''')
+        approved_pr_ids = [row['id'] for row in cur.fetchall()]
+        
+        deleted_count = 0
+        deleted_items_count = 0
+        deleted_approvals_count = 0
+        
+        if approved_pr_ids:
+            # Delete pending item approvals for these PRs
+            placeholders = ','.join(['%s'] * len(approved_pr_ids))
+            cleanup_sql = f'''
+                DELETE ia FROM item_approvals ia
+                INNER JOIN pr_items pri ON ia.pr_item_id = pri.id
+                WHERE pri.pr_id IN ({placeholders}) AND ia.status = 'pending'
+            '''
+            cur.execute(cleanup_sql, approved_pr_ids)
+            deleted_count = cur.rowcount
+            
+            # Delete pending items for these PRs
+            cleanup_items_sql = f'''
+                DELETE pri FROM pr_items pri
+                WHERE pri.pr_id IN ({placeholders}) AND (pri.is_approved IS NULL OR pri.is_approved = 0)
+            '''
+            cur.execute(cleanup_items_sql, approved_pr_ids)
+            deleted_items_count = cur.rowcount
+            
+            # Delete pending approvals from approvals table for these PRs
+            cleanup_approvals_sql = f'''
+                DELETE FROM approvals 
+                WHERE pr_id IN ({placeholders}) AND status = 'pending'
+            '''
+            cur.execute(cleanup_approvals_sql, approved_pr_ids)
+            deleted_approvals_count = cur.rowcount
+            
+            print(f"Cleanup: Deleted {deleted_count} pending item approvals, {deleted_items_count} pending items, and {deleted_approvals_count} pending approvals for PRs with approved items")
+        
+        # Additional cleanup: Remove duplicate pending entries for all PRs
+        # Keep only the most recent approval for each PR
+        cur.execute('''
+            DELETE a1 FROM approvals a1
+            INNER JOIN approvals a2 ON a1.pr_id = a2.pr_id 
+            WHERE a1.status = 'pending' 
+            AND a2.status = 'pending'
+            AND a1.id < a2.id
+        ''')
+        duplicate_pending_deleted = cur.rowcount
+        
+        # Remove orphaned pending item approvals
+        cur.execute('''
+            DELETE ia FROM item_approvals ia
+            LEFT JOIN approvals a ON ia.pr_item_id IN (
+                SELECT pri.id FROM pr_items pri 
+                WHERE pri.pr_id = a.pr_id
+            )
+            WHERE ia.status = 'pending' 
+            AND a.id IS NULL
+        ''')
+        orphaned_approvals_deleted = cur.rowcount
+        
+        if duplicate_pending_deleted > 0 or orphaned_approvals_deleted > 0:
+            print(f"Additional cleanup: Deleted {duplicate_pending_deleted} duplicate pending approvals and {orphaned_approvals_deleted} orphaned item approvals")
+        
+        conn.commit()
+        return deleted_count, deleted_items_count, deleted_approvals_count
+        
+    except Exception as e:
+        print(f"Error in cleanup: {e}")
+        conn.rollback()
+        return 0, 0, 0
+    finally:
+        cur.close()
+        conn.close()
 
 # Super Admin Item Approval API
 @procurement_bp.route('/api/super-admin/approve-items', methods=['POST'])
@@ -2820,12 +3040,15 @@ def super_admin_approve_items():
         if not pr_id or not items or status not in ['approved', 'rejected']:
             return jsonify({'success': False, 'error': 'Invalid request data'}), 400
         
-        conn = get_db_connection()
+        conn = get_db_connection(Curr_Proj_Name)
         cur = conn.cursor()
         
         # Get current user (Super Admin)
         from flask_login import current_user
         approver_id = current_user.id if current_user.is_authenticated else 1
+        
+        # Get list of approved item IDs for permanent deletion logic
+        approved_item_ids = [item_data.get('item_id') for item_data in items if item_data.get('item_id')]
         
         # Process each item
         for item_data in items:
@@ -2838,9 +3061,9 @@ def super_admin_approve_items():
             # Update item approval status
             cur.execute('''
                 UPDATE pr_items 
-                SET is_approved = %s, approval_justification = %s, approved_by = %s, approved_at = NOW()
+                SET is_approved = %s, approved_at = NOW()
                 WHERE id = %s AND pr_id = %s
-            ''', (1 if status == 'approved' else 0, justification, approver_id, item_id, pr_id))
+            ''', (1 if status == 'approved' else 0, item_id, pr_id))
             
             # Create or update approval record for this item
             cur.execute('''
@@ -2851,6 +3074,24 @@ def super_admin_approve_items():
                 approval_date = VALUES(approval_date), 
                 notes = VALUES(notes)
             ''', (item_id, approver_id, status, justification))
+        
+        # If status is 'approved', permanently delete all unapproved items
+        if status == 'approved' and approved_item_ids:
+            # Delete unapproved items from pr_items table
+            approved_ids_str = ','.join(map(str, approved_item_ids))
+            cur.execute(f'''
+                DELETE FROM pr_items 
+                WHERE pr_id = %s AND id NOT IN ({approved_ids_str})
+            ''', (pr_id,))
+            
+            # Delete corresponding item_approvals records for deleted items
+            cur.execute(f'''
+                DELETE ia FROM item_approvals ia
+                LEFT JOIN pr_items pri ON ia.pr_item_id = pri.id
+                WHERE pri.id IS NULL
+            ''')
+            
+            print(f"Permanently deleted unapproved items for PR {pr_id}. Kept only approved items: {approved_item_ids}")
         
         # Check if all items are approved
         cur.execute('''

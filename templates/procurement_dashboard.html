@@ -126,7 +126,7 @@
                   </div>
                 </div>
                 <div class="action-card-footer">
-                  <a href="/procurement/create-pr" class="btn btn-light btn-sm w-100">
+                  <a href="{{ url_for('it.create_pr') }}" class="btn btn-light btn-sm w-100">
                     <i class="fas fa-arrow-right me-1"></i>Get Started
                   </a>
                 </div>
@@ -145,7 +145,7 @@
                   </div>
                 </div>
                 <div class="action-card-footer">
-                  <a href="/procurement/approvals" class="btn btn-light btn-sm w-100">
+                  <a href="{{ url_for('it.pr_approvals') }}" class="btn btn-light btn-sm w-100">
                     <i class="fas fa-arrow-right me-1"></i>Review
                   </a>
                 </div>
@@ -164,7 +164,7 @@
                   </div>
                 </div>
                 <div class="action-card-footer">
-                  <a href="/procurement/upload-po" class="btn btn-light btn-sm w-100">
+                  <a href="{{ url_for('it.upload_po') }}" class="btn btn-light btn-sm w-100">
                     <i class="fas fa-arrow-right me-1"></i>Upload
                   </a>
                 </div>
@@ -183,7 +183,7 @@
                   </div>
                 </div>
                 <div class="action-card-footer">
-                  <a href="/procurement/delivery-entry" class="btn btn-light btn-sm w-100">
+                  <a href="{{ url_for('it.delivery_entry') }}" class="btn btn-light btn-sm w-100">
                     <i class="fas fa-arrow-right me-1"></i>Record
                   </a>
                 </div>
@@ -201,7 +201,7 @@
       <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
           <h6 class="m-0 font-weight-bold text-primary">Recent Purchase Requests</h6>
-          <a href="/procurement/approvals" class="btn btn-sm btn-primary">
+          <a href="{{ url_for('it.pr_approvals') }}" class="btn btn-sm btn-primary">
             <i class="fas fa-eye me-1"></i>View All
           </a>
         </div>
@@ -220,7 +220,7 @@
       <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
           <h6 class="m-0 font-weight-bold text-primary">Upcoming Deliveries</h6>
-          <a href="/procurement/delivery-entry" class="btn btn-sm btn-primary">
+          <a href="{{ url_for('it.delivery_entry') }}" class="btn btn-sm btn-primary">
             <i class="fas fa-eye me-1"></i>View All
           </a>
         </div>
@@ -359,7 +359,7 @@
 // Load dashboard data
 function loadDashboardData() {
   // Load counts
-  fetch('/api/procurement/dashboard-stats')
+          fetch('/it/api/procurement/dashboard-stats')
     .then(r => r.json())
     .then(data => {
       if (data.success) {
@@ -371,7 +371,7 @@ function loadDashboardData() {
     });
 
   // Load recent PRs
-  fetch('/api/purchase_requests?limit=5')
+          fetch('/it/api/purchase_requests?limit=5')
     .then(r => r.json())
     .then(data => {
       if (data.success) {
@@ -407,7 +407,7 @@ function loadDashboardData() {
     });
 
   // Load upcoming deliveries
-  fetch('/api/procurement/upcoming-deliveries')
+          fetch('/it/api/procurement/upcoming-deliveries')
     .then(r => r.json())
     .then(data => {
       if (data.success) {

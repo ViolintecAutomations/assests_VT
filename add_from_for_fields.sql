@@ -14,3 +14,8 @@ UPDATE purchase_requests
 SET from_field = 'Not specified', for_field = 'Not specified' 
 WHERE from_field IS NULL OR for_field IS NULL;
 
+
+
+
+
+

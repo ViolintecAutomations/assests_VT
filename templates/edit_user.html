@@ -8,10 +8,122 @@
       <div class="mb-3">{{ form.name.label(class="form-label") }}{{ form.name(class="form-control") }}</div>
       <div class="mb-3">{{ form.email.label(class="form-label") }}{{ form.email(class="form-control") }}</div>
       <div class="mb-3">{{ form.password.label(class="form-label") }}{{ form.password(class="form-control") }} <small class="text-muted">(Leave blank to keep current password)</small></div>
-      <div class="mb-3">{{ form.role.label(class="form-label") }}{{ form.role(class="form-select") }}</div>
+      <div class="mb-3">
+        {{ form.role.label(class="form-label") }}
+        {{ form.role(class="form-select", id="userRole") }}
+      </div>
+      
+      <!-- Admin Menu Permissions Section -->
+      <div id="adminMenuPermissions" class="mb-3" style="display: {% if user.role == 'admin' %}block{% else %}none{% endif %};">
+        <label class="form-label">
+          <i class="bi bi-list-check me-1"></i>Admin Menu Permissions
+        </label>
+        <div class="border rounded p-3 bg-light">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_dashboard" id="menu_dashboard" {% if menu_permissions.get('dashboard') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_dashboard">
+                  <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_procurement" id="menu_procurement" {% if menu_permissions.get('procurement') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_procurement">
+                  <i class="fas fa-shopping-cart me-1"></i>Procurement Dashboard
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_create_pr" id="menu_create_pr" {% if menu_permissions.get('create_pr') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_create_pr">
+                  <i class="fas fa-plus-circle me-1"></i>Create PR
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_approve_prs" id="menu_approve_prs" {% if menu_permissions.get('approve_prs') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_approve_prs">
+                  <i class="fas fa-check-circle me-1"></i>Approve PRs
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_upload_po" id="menu_upload_po" {% if menu_permissions.get('upload_po') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_upload_po">
+                  <i class="fas fa-upload me-1"></i>Upload PO
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_record_delivery" id="menu_record_delivery" {% if menu_permissions.get('record_delivery') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_record_delivery">
+                  <i class="fas fa-truck me-1"></i>Record Delivery
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_asset_master" id="menu_asset_master" {% if menu_permissions.get('asset_master') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_asset_master">
+                  <i class="fas fa-box me-1"></i>Asset Master
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_assign_asset" id="menu_assign_asset" {% if menu_permissions.get('assign_asset') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_assign_asset">
+                  <i class="fas fa-exchange-alt me-1"></i>Assign Asset
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_requests" id="menu_requests" {% if menu_permissions.get('requests') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_requests">
+                  <i class="fas fa-list me-1"></i>Requests
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_user_management" id="menu_user_management" {% if menu_permissions.get('user_management') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_user_management">
+                  <i class="fas fa-users me-1"></i>User Management
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_bod_report" id="menu_bod_report" {% if menu_permissions.get('bod_report') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_bod_report">
+                  <i class="fas fa-clipboard-check me-1"></i>BOD Report
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="menu_daily_infrastructure" id="menu_daily_infrastructure" {% if menu_permissions.get('daily_infrastructure') %}checked{% endif %}>
+                <label class="form-check-label" for="menu_daily_infrastructure">
+                  <i class="fas fa-calendar-check me-1"></i>Daily Infrastructure Status
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       {{ form.submit(class="btn btn-primary") }}
-      <a href="/users" class="btn btn-secondary">Cancel</a>
+      <a href="{{ url_for('it.users') }}" class="btn btn-secondary">Cancel</a>
     </form>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const userRoleSelect = document.getElementById('userRole');
+  const adminMenuPermissions = document.getElementById('adminMenuPermissions');
+  
+  // Show/hide admin menu permissions based on role selection
+  if (userRoleSelect) {
+    userRoleSelect.addEventListener('change', function() {
+      if (this.value === 'admin') {
+        adminMenuPermissions.style.display = 'block';
+      } else {
+        adminMenuPermissions.style.display = 'none';
+        // Uncheck all checkboxes when role is not admin
+        const checkboxes = adminMenuPermissions.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+      }
+    });
+  }
+});
+</script>
 {% endblock %} 

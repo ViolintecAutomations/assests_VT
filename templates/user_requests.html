@@ -4,7 +4,7 @@
   <h2>My Asset Requests</h2>
   <div class="card mb-4">
     <div class="card-body">
-      <form method="POST" action="/user-requests">
+      <form method="POST" action="{{ url_for('it.user_requests') }}">
         {{ form.hidden_tag() }}
         <div class="mb-3">
           {{ form.asset_type.label(class="form-label") }}

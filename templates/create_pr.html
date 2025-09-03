@@ -34,10 +34,22 @@
               <div class="col-md-4">
                 <div class="form-group">
                   <label for="from_field" class="form-label fw-bold">
-                    <i class="bi bi-person"></i> From
+                    <i class="bi bi-person"></i> From IT Department
                   </label>
-                  <input type="text" class="form-control" id="from_field" name="from_field" 
-                         placeholder="Enter sender/department" required>
+                  <div class="d-flex gap-2">
+                    <select class="form-control" id="from_field" name="from_field" required>
+                      <option value="">Select Department</option>
+                      <!-- Will be populated by JavaScript -->
+                    </select>
+                    {% if current_user.role == 'super_admin' %}
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="addDropdownOption('from_options', 'from_field')" title="Add New Department">
+                      <i class="bi bi-plus"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDropdownOption('from_options', 'from_field')" title="Remove Department">
+                      <i class="bi bi-dash"></i>
+                    </button>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
               <div class="col-md-4">
@@ -45,36 +57,23 @@
                   <label for="justification" class="form-label fw-bold">
                     <i class="bi bi-people"></i> For
                   </label>
-                  <select class="form-control" id="justification" name="justification" required>
-                    <option value="">Select Purpose</option>
-                    <option value="HR New Joiner">HR New Joiner</option>
-                    <option value="Replacement">Replacement</option>
-                    <option value="Upgrade">Upgrade</option>
-                    <option value="Additional">Additional</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Project">Project</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="approver" class="form-label fw-bold">
-                    <i class="bi bi-shield-check"></i> Approver
-                  </label>
                   <div class="d-flex gap-2">
-                    <select class="form-control" id="approver" name="approver_id" required>
-                      <option value="">Select Approver</option>
+                    <select class="form-control" id="justification" name="justification" required>
+                      <option value="">Select Purpose</option>
                       <!-- Will be populated by JavaScript -->
                     </select>
-                    {% if user_role == 'admin' %}
-                    <button type="button" class="btn btn-outline-primary" onclick="addApprover()" title="Add New Approver">
+                    {% if current_user.role == 'super_admin' %}
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="addDropdownOption('for_options', 'justification')" title="Add New Option">
                       <i class="bi bi-plus"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDropdownOption('for_options', 'justification')" title="Remove Option">
+                      <i class="bi bi-dash"></i>
                     </button>
                     {% endif %}
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -270,10 +269,20 @@
         <div class="d-flex gap-3 align-items-end">
           <!-- Asset Type Dropdown -->
           <div style="width: 200px;">
+            <div class="input-group">
             <select class="form-control asset-type-select">
               <option value="">Select Asset Type</option>
               <!-- Will be populated by JavaScript -->
             </select>
+              {% if current_user.role == 'super_admin' %}
+              <button type="button" class="btn btn-outline-success btn-sm" onclick="addDropdownOption('asset_types', 'asset_type')" title="Add new asset type">
+                <i class="bi bi-plus"></i>
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDropdownOption('asset_types', 'asset_type')" title="Delete asset type">
+                <i class="bi bi-dash"></i>
+              </button>
+              {% endif %}
+            </div>
           </div>
           <!-- Stock Available Display -->
           <div class="stock-available-display" style="min-width: 140px;">
@@ -285,7 +294,7 @@
           <!-- Quantity Field -->
           <div style="min-width: 120px;">
             <label class="form-label small text-muted">Quantity</label>
-            <input type="number" class="form-control form-control-sm quantity" min="1" placeholder="1" required>
+            <input type="number" class="form-control form-control-sm quantity" min="0" placeholder="0" required>
           </div>
           <!-- Quantity to Procure Display -->
           <div style="min-width: 140px; text-align: center;">
@@ -331,11 +340,11 @@
             <option value="">Select Brand</option>
             <!-- Will be populated by JavaScript -->
           </select>
-          {% if user_role == 'admin' %}
-          <button type="button" class="btn btn-outline-secondary add-brand-btn" title="Add new brand" tabindex="-1">
+          {% if current_user.role == 'super_admin' %}
+          <button type="button" class="btn btn-outline-success btn-sm" onclick="addDropdownOption('brands', 'brand')" title="Add new brand">
             <i class="bi bi-plus"></i>
           </button>
-          <button type="button" class="btn btn-outline-danger delete-brand-btn" title="Delete brand" tabindex="-1">
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDropdownOption('brands', 'brand')" title="Delete brand">
             <i class="bi bi-dash"></i>
           </button>
           {% endif %}
@@ -350,11 +359,11 @@
             <option value="">Select Vendor</option>
             <!-- Will be populated by JavaScript -->
           </select>
-          {% if user_role == 'admin' %}
-          <button type="button" class="btn btn-outline-secondary add-vendor-btn" title="Add new vendor" tabindex="-1">
+          {% if current_user.role == 'super_admin' %}
+          <button type="button" class="btn btn-outline-success btn-sm" onclick="addDropdownOption('vendors', 'vendor')" title="Add new vendor">
             <i class="bi bi-plus"></i>
           </button>
-          <button type="button" class="btn btn-outline-danger delete-vendor-btn" title="Delete vendor" tabindex="-1">
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDropdownOption('vendors', 'vendor')" title="Delete vendor">
             <i class="bi bi-dash"></i>
           </button>
           {% endif %}
@@ -741,6 +750,8 @@ document.addEventListener('DOMContentLoaded', function() {
   loadApprovers();
   loadBrands();
   loadVendors();
+  loadForOptions();
+  loadFromOptions();
   
   // Test input fields after a short delay
   setTimeout(() => {
@@ -820,12 +831,18 @@ function loadApprovers() {
     .then(data => {
       if (data.success) {
         const select = document.getElementById('approver');
+        if (select) {
+          // Clear existing options except the first one
+          select.innerHTML = '<option value="">Select Approver</option>';
+          
+          // Add new options
         data.approvers.forEach(approver => {
           const option = document.createElement('option');
-          option.value = approver.email; // Use email as value
+            option.value = approver.id; // Use database ID as value
           option.textContent = approver.name || approver.email; // Show name if available, fallback to email
           select.appendChild(option);
         });
+        }
       } else {
         console.error('Error loading approvers:', data.error);
       }
@@ -904,11 +921,11 @@ function initializeItemDropdowns() {
     const brandSelect = itemRow.querySelector('.brand-select');
     if (brandSelect && window.brands && brandSelect.options.length <= 1) {
       window.brands.forEach(brand => {
-        const exists = Array.from(brandSelect.options).some(opt => opt.value == brand);
+        const exists = Array.from(brandSelect.options).some(opt => opt.value == brand.name);
         if (!exists) {
           const option = document.createElement('option');
-          option.value = brand;
-          option.textContent = brand;
+          option.value = brand.name; // Use text value directly
+          option.textContent = brand.name; // Use name as display text
           brandSelect.appendChild(option);
         }
       });
@@ -917,11 +934,11 @@ function initializeItemDropdowns() {
     const vendorSelect = itemRow.querySelector('.vendor-select');
     if (vendorSelect && window.vendors && vendorSelect.options.length <= 1) {
       window.vendors.forEach(vendor => {
-        const exists = Array.from(vendorSelect.options).some(opt => opt.value == vendor);
+        const exists = Array.from(vendorSelect.options).some(opt => opt.value == vendor.name);
         if (!exists) {
           const option = document.createElement('option');
-          option.value = vendor;
-          option.textContent = vendor;
+          option.value = vendor.name; // Use text value directly
+          option.textContent = vendor.name; // Use name as display text
           vendorSelect.appendChild(option);
         }
       });
@@ -1606,7 +1623,10 @@ function updatePRItemsTable() {
 
 // Function to show PR preview
 function showPRPreview() {
+  console.log('showPRPreview function called');
+  
   const itemRows = document.querySelectorAll('.item-row');
+  console.log('Found item rows:', itemRows.length);
   
   if (itemRows.length === 0) {
     alert('Please add at least one item to the PR before previewing.');
@@ -1615,17 +1635,23 @@ function showPRPreview() {
   
   // Validate required fields
   const justification = document.getElementById('justification').value.trim();
-  const approver = document.getElementById('approver').value;
   const fromField = document.getElementById('from_field').value.trim();
+  const userRole = document.body.getAttribute('data-user-role');
+  
+  console.log('Validation values:', { justification, fromField, userRole });
   
   if (!justification) {
     alert('Please provide a reason for the PR.');
     return;
   }
   
+  // Only validate approver for Super Admin users
+  if (userRole === 'super_admin') {
+    const approver = document.getElementById('approver').value;
   if (!approver) {
     alert('Please select an approver for the PR.');
     return;
+    }
   }
   
   if (!fromField) {
@@ -1633,15 +1659,28 @@ function showPRPreview() {
     return;
   }
   
+  console.log('All validations passed, populating preview table...');
+  
   // Populate preview table
   populatePreviewTable();
   
   // Update preview summary
   updatePreviewSummary();
   
+  console.log('Showing modal...');
+  
   // Show modal
-  const modal = new bootstrap.Modal(document.getElementById('prPreviewModal'));
+  const modalElement = document.getElementById('prPreviewModal');
+  console.log('Modal element found:', modalElement);
+  
+  if (modalElement) {
+    const modal = new bootstrap.Modal(modalElement);
   modal.show();
+    console.log('Modal show() called');
+  } else {
+    console.error('Modal element not found!');
+    alert('Error: Modal element not found. Please refresh the page and try again.');
+  }
 }
 
 // Function to populate preview table
@@ -2107,7 +2146,6 @@ document.getElementById('prForm').addEventListener('submit', function(e) {
   
   // Validate required fields
   const justification = document.getElementById('justification').value.trim();
-  const approverEmail = document.getElementById('approver').value.trim();
   const fromField = document.getElementById('from_field').value.trim();
   
   if (!justification) {
@@ -2115,15 +2153,59 @@ document.getElementById('prForm').addEventListener('submit', function(e) {
     return;
   }
   
-  if (!approverEmail) {
-    alert('Please select an approver.');
-    return;
-  }
-  
   if (!fromField) {
     alert('Please enter the "From" field.');
     return;
   }
+  
+  // Get approver based on user role
+  let approverEmail = '';
+  const userRole = document.body.getAttribute('data-user-role');
+  
+  if (userRole === 'super_admin') {
+    // Super Admin can select approver manually
+    approverEmail = document.getElementById('approver').value.trim();
+  if (!approverEmail) {
+    alert('Please select an approver.');
+    return;
+  }
+  } else if (userRole === 'admin') {
+    // Admin: Get assigned approver automatically
+    const userId = document.body.getAttribute('data-user-id');
+    if (!userId) {
+      alert('User ID not found. Please refresh the page and try again.');
+    return;
+  }
+  
+    // Get assigned approver for this admin
+    return fetch(`/api/admin-approver-mappings/admin/${userId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.approver) {
+          approverEmail = data.approver.approver_email;
+          // Continue with PR creation
+          createPurchaseRequest(approverEmail, justification, fromField);
+        } else {
+          alert('No approver assigned to you. Please contact Super Admin to assign an approver.');
+        }
+      })
+      .catch(error => {
+        console.error('Error getting assigned approver:', error);
+        alert('Error getting assigned approver. Please try again.');
+      });
+  } else {
+    alert('Invalid user role.');
+    return;
+  }
+  
+  // For Super Admin, continue with PR creation
+  if (userRole === 'super_admin') {
+    createPurchaseRequest(approverEmail, justification, fromField);
+  }
+});
+
+// Function to create purchase request
+function createPurchaseRequest(approverEmail, justification, fromField) {
   
   const items = [];
   document.querySelectorAll('.item-row').forEach(itemRow => {
@@ -2284,6 +2366,204 @@ document.getElementById('prForm').addEventListener('submit', function(e) {
     
     alert('Error submitting PR: ' + error.message);
   });
-});
+}
+
+// Super Admin Dropdown Management Functions
+function addDropdownOption(optionType, dropdownId) {
+  const optionValue = prompt(`Enter new ${optionType.replace('_', ' ')} option:`);
+  if (!optionValue || optionValue.trim() === '') {
+    return;
+  }
+  
+  fetch('/api/super-admin/add-option', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      type: optionType,
+      value: optionValue.trim()
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`${optionValue} added successfully!`);
+      // Refresh the dropdown
+      refreshDropdown(optionType, dropdownId);
+    } else {
+      alert('Error adding option: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error adding option: ' + error.message);
+  });
+}
+
+function removeDropdownOption(optionType, dropdownId) {
+  const dropdown = document.getElementById(dropdownId) || document.querySelector(`.${dropdownId}-select`);
+  if (!dropdown) {
+    console.error('Dropdown not found:', dropdownId);
+    return;
+  }
+  
+  const selectedOption = dropdown.options[dropdown.selectedIndex];
+  if (!selectedOption || selectedOption.value === '') {
+    alert('Please select an option to remove.');
+    return;
+  }
+  
+  if (!confirm(`Are you sure you want to remove "${selectedOption.text}"?`)) {
+    return;
+  }
+  
+  fetch('/api/super-admin/remove-option', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      type: optionType,
+      value: selectedOption.value, // Send the text value directly
+      id: null // No longer need ID since we're using text values
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`${selectedOption.text} removed successfully!`);
+      // Refresh the dropdown
+      refreshDropdown(optionType, dropdownId);
+    } else {
+      alert('Error removing option: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error removing option: ' + error.message);
+  });
+}
+
+function refreshDropdown(optionType, dropdownId) {
+  // Refresh the specific dropdown based on type
+  if (optionType === 'for_options') {
+    loadForOptions();
+  } else if (optionType === 'from_options') {
+    loadFromOptions();
+  } else if (optionType === 'asset_types') {
+    loadAssetTypes();
+  } else if (optionType === 'brands') {
+    loadBrands();
+    // Refresh all item rows after brands are loaded
+    setTimeout(() => {
+      document.querySelectorAll('.item-row').forEach(itemRow => {
+        const brandSelect = itemRow.querySelector('.brand-select');
+        if (brandSelect) {
+          // Clear existing options
+          brandSelect.innerHTML = '<option value="">Select Brand</option>';
+          // Re-populate with new data
+          if (window.brands) {
+            window.brands.forEach(brand => {
+              const option = document.createElement('option');
+              option.value = brand.name; // Use text value directly
+              option.textContent = brand.name;
+              brandSelect.appendChild(option);
+            });
+          }
+        }
+      });
+    }, 100);
+  } else if (optionType === 'vendors') {
+    loadVendors();
+    // Refresh all item rows after vendors are loaded
+    setTimeout(() => {
+      document.querySelectorAll('.item-row').forEach(itemRow => {
+        const vendorSelect = itemRow.querySelector('.vendor-select');
+        if (vendorSelect) {
+          // Clear existing options
+          vendorSelect.innerHTML = '<option value="">Select Vendor</option>';
+          // Re-populate with new data
+          if (window.vendors) {
+            window.vendors.forEach(vendor => {
+              const option = document.createElement('option');
+              option.value = vendor.name; // Use text value directly
+              option.textContent = vendor.name;
+              vendorSelect.appendChild(option);
+            });
+          }
+        }
+      });
+    }, 100);
+  } else if (optionType === 'approvers') {
+    loadApprovers();
+  }
+}
+
+function loadForOptions() {
+  console.log('Loading for options...');
+  fetch('/api/for-options')
+    .then(response => response.json())
+    .then(data => {
+      console.log('For options data:', data);
+      if (data.success) {
+        const dropdown = document.getElementById('justification');
+        if (dropdown) {
+          console.log('Found justification dropdown, populating with', data.options.length, 'options');
+          // Clear existing options except the first one
+          dropdown.innerHTML = '<option value="">Select Purpose</option>';
+          
+          // Add new options - store text value directly
+          data.options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option.option_value; // Use text value directly
+            optionElement.textContent = option.option_value; // Use option_value as display text
+            dropdown.appendChild(optionElement);
+          });
+        } else {
+          console.log('Justification dropdown not found');
+        }
+      } else {
+        console.error('Error loading for options:', data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error loading for options:', error);
+    });
+}
+
+function loadFromOptions() {
+  console.log('Loading from options...');
+  fetch('/api/from-options')
+    .then(response => response.json())
+    .then(data => {
+      console.log('From options data:', data);
+      if (data.success) {
+        const dropdown = document.getElementById('from_field');
+        if (dropdown) {
+          console.log('Found from_field dropdown, populating with', data.options.length, 'options');
+          // Clear existing options except the first one
+          dropdown.innerHTML = '<option value="">Select Department</option>';
+          
+          // Add new options - store text value directly
+          data.options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option.option_value; // Use text value directly
+            optionElement.textContent = option.option_value; // Use option_value as display text
+            dropdown.appendChild(optionElement);
+          });
+        } else {
+          console.log('From field dropdown not found');
+        }
+      } else {
+        console.error('Error loading from options:', data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error loading from options:', error);
+    });
+}
+
+// Note: loadForOptions() and loadFromOptions() are now called in the main DOMContentLoaded event listener above
 </script>
 {% endblock %} 
