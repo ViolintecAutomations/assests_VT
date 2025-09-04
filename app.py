@@ -976,6 +976,7 @@ def delete_user(user_id):
         
         # If there are dependencies, handle them with cascade deletion for all roles
         if dependencies:
+<<<<<<< HEAD
             # Get user role for logging purposes
             cur.execute('SELECT role FROM users WHERE id = %s', (user_id,))
             user_role = cur.fetchone()['role']
@@ -1005,6 +1006,11 @@ def delete_user(user_id):
             cur.execute('DELETE FROM notifications WHERE user_id = %s', (user_id,))
             
             flash('All user references have been removed. Proceeding with user deletion...', 'info')
+=======
+            dependency_list = ', '.join(dependencies)
+            flash(f'Cannot delete user. User is referenced in: {dependency_list}. Please remove these references first.', 'error')
+            return redirect(url_for('it.users'))
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         
         # Proceed with user deletion
         cur.execute('DELETE FROM users WHERE id = %s', (user_id,))
@@ -5482,14 +5488,22 @@ def test_delete():
     print("DEBUG: test_delete endpoint called")
     return jsonify({'success': True, 'message': 'Test endpoint working'})
 
+<<<<<<< HEAD
 @it_bp.route('/api/delete-bod-row', methods=['GET'])
+=======
+@app.route('/api/delete-bod-row', methods=['GET'])
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 @csrf.exempt
 def test_delete_bod_row_get():
     """Test GET endpoint for debugging"""
     print("DEBUG: test_delete_bod_row_get endpoint called")
     return jsonify({'success': True, 'message': 'GET endpoint working'})
 
+<<<<<<< HEAD
 @it_bp.route('/api/delete-bod-row', methods=['POST'])
+=======
+@app.route('/api/delete-bod-row', methods=['POST'])
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 @csrf.exempt
 def delete_bod_row():
     """Permanently delete a specific row from BOD report data"""

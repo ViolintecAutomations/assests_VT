@@ -200,10 +200,22 @@
                 <div class="col-md-4 mb-3">
                     <label for="name" class="form-label">Name</label>
                     <div class="input-group">
+<<<<<<< HEAD
                         <input type="text" class="form-control" id="name" value="{{ current_user.name if current_user.is_authenticated else '' }}" readonly>
                         {% if current_user.is_authenticated and current_user.role == 'super_admin' %}
                         <button class="btn btn-outline-info" type="button" onclick="toggleNameEdit()" title="Toggle name edit mode">
                             <i class="fas fa-edit"></i>
+=======
+                        <select class="form-select" id="name" placeholder="Select your name">
+                            <option value="">Select your name</option>
+                        </select>
+                        {% if current_user.is_authenticated and current_user.role == 'super_admin' %}
+                        <button class="btn btn-outline-success" type="button" onclick="addBodName()" title="Add new BOD name">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" type="button" onclick="deleteBodName()" title="Remove selected BOD name">
+                            <i class="fas fa-minus"></i>
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                         </button>
                         {% endif %}
                     </div>
@@ -265,7 +277,11 @@
     </div>
 
     <!-- 1. Internet Links Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
                             <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -290,6 +306,12 @@
                         <th>Reason</th>
                         <th>Remarks</th>
                         <th>Checked Time</th>
+<<<<<<< HEAD
+=======
+                        {% if current_user.role == 'super_admin' %}
+                        <th>Action</th>
+                        {% endif %}
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                     </tr>
                 </thead>
                 <tbody>
@@ -326,6 +348,12 @@
                </td>
                         <td><input type="text" class="form-control remarks-input" id="remarks-1" placeholder="Enter remarks if needed"></td>
                         <td><span id="checked-time-1">-</span></td>
+<<<<<<< HEAD
+=======
+                        {% if current_user.role == 'super_admin' %}
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteRow(this, 'network')" title="Delete row"><i class="fas fa-trash"></i></button></td>
+                        {% endif %}
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                     </tr>
                     <tr data-row="2">
                         <td>2</td>
@@ -360,6 +388,12 @@
                </td>
                         <td><input type="text" class="form-control remarks-input" id="remarks-2" placeholder="Enter remarks if needed"></td>
                         <td><span id="checked-time-2">-</span></td>
+<<<<<<< HEAD
+=======
+                        {% if current_user.role == 'super_admin' %}
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteRow(this, 'network')" title="Delete row"><i class="fas fa-trash"></i></button></td>
+                        {% endif %}
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                     </tr>
                     <tr data-row="3">
                         <td>3</td>
@@ -399,6 +433,12 @@
                </td>
                         <td><input type="text" class="form-control remarks-input" id="remarks-3" placeholder="Enter remarks if needed"></td>
                         <td><span id="checked-time-3">-</span></td>
+<<<<<<< HEAD
+=======
+                        {% if current_user.role == 'super_admin' %}
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteRow(this, 'network')" title="Delete row"><i class="fas fa-trash"></i></button></td>
+                        {% endif %}
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                     </tr>
                     <tr data-row="4">
                         <td>4</td>
@@ -438,6 +478,12 @@
                </td>
                         <td><input type="text" class="form-control remarks-input" id="remarks-4" placeholder="Enter remarks if needed"></td>
                         <td><span id="checked-time-4">-</span></td>
+<<<<<<< HEAD
+=======
+                        {% if current_user.role == 'super_admin' %}
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteRow(this, 'network')" title="Delete row"><i class="fas fa-trash"></i></button></td>
+                        {% endif %}
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                     </tr>
                     <tr data-row="5">
                         <td>5</td>
@@ -477,6 +523,12 @@
                </td>
                         <td><input type="text" class="form-control remarks-input" id="remarks-5" placeholder="Enter remarks if needed"></td>
                         <td><span id="checked-time-5">-</span></td>
+<<<<<<< HEAD
+=======
+                        {% if current_user.role == 'super_admin' %}
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteRow(this, 'network')" title="Delete row"><i class="fas fa-trash"></i></button></td>
+                        {% endif %}
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                     </tr>
                 </tbody>
             </table>
@@ -484,18 +536,28 @@
     </div>
 
     <!-- 2. Server Connectivity Check Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
                             <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <i class="fas fa-server me-2"></i>
                         2. Server Connectivity Check
                     </div>
+<<<<<<< HEAD
                     {% if current_user.role == 'super_admin' %}
                     <button class="btn btn-sm btn-success" onclick="addNewRow('server_connectivity')" title="Add new server connectivity row">
                         <i class="fas fa-plus me-1"></i>Add New Row
                     </button>
                     {% endif %}
+=======
+                    <button class="btn btn-sm btn-success" onclick="addNewRow('server_connectivity')" title="Add new server connectivity row">
+                        <i class="fas fa-plus me-1"></i>Add New Row
+                    </button>
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                 </div>
         </div>
         <div class="section-content">
@@ -514,7 +576,11 @@
                     </tr>
                 </thead>
                 <tbody>
+<<<<<<< HEAD
                     <tr data-row="1" style="display: none;">
+=======
+                    <tr data-row="1">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                         <td>1</td>
                         <td>Sharing access Checking – Storage</td>
                         <td>
@@ -547,7 +613,11 @@
                         <td><button class="btn btn-sm btn-danger" onclick="deleteRow(this, 'server_connectivity')" title="Delete row"><i class="fas fa-trash"></i></button></td>
                         {% endif %}
                     </tr>
+<<<<<<< HEAD
                     <tr data-row="2" style="display: none;">
+=======
+                    <tr data-row="2">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                         <td>2</td>
                         <td>New NAS Server status</td>
                         <td>
@@ -580,7 +650,11 @@
                         <td><button class="btn btn-sm btn-danger" onclick="deleteRow(this, 'server_connectivity')" title="Delete row"><i class="fas fa-trash"></i></button></td>
                         {% endif %}
                     </tr>
+<<<<<<< HEAD
                     <tr data-row="3" style="display: none;">
+=======
+                    <tr data-row="3">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                         <td>3</td>
                         <td>Server Room AC Status</td>
                         <td>
@@ -619,7 +693,11 @@
     </div>
 
     <!-- 3. Antivirus Status Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
                             <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -689,7 +767,11 @@
     </div>
 
     <!-- 4. Common Sharing Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -739,7 +821,11 @@
     </div>
 
     <!-- 5. Security Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -827,7 +913,11 @@
     </div>
 
     <!-- 6. Telecommunication Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -893,7 +983,11 @@
     </div>
 
     <!-- 7. Technology Room Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -1025,7 +1119,11 @@
     </div>
 
     <!-- 8. Printers Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -1159,7 +1257,11 @@
     </div>
 
     <!-- 9. Others Section -->
+<<<<<<< HEAD
     <div class="report-section" style="display: none;">
+=======
+    <div class="report-section">
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         <div class="section-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -1361,7 +1463,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     synchronizeNetworkTableWithCommonItems();
                 }, 800);
             } else {
+<<<<<<< HEAD
                 // Hide all rows and sections if no location is selected
+=======
+                // Hide all rows if no location is selected
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                 hideAllTableRows();
             }
         });
@@ -1402,6 +1508,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+<<<<<<< HEAD
 // Function to hide all report sections except BOD
 function hideAllReportSections() {
     console.log('Hiding all report sections except BOD...');
@@ -1426,13 +1533,18 @@ function showAllReportSections() {
     });
 }
 
+=======
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 // Function to hide all table rows initially
 function hideAllTableRows() {
     console.log('Hiding all table rows initially...');
     
+<<<<<<< HEAD
     // Hide all report sections except BOD
     hideAllReportSections();
     
+=======
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
     const sections = [
         { sectionType: 'network', tableId: 'internet-table' },
         { sectionType: 'server_connectivity', tableId: 'server-table' },
@@ -1457,6 +1569,7 @@ function hideAllTableRows() {
             }
         }
     });
+<<<<<<< HEAD
     
     // Also hide static Server Connectivity rows when no location is selected
     hideServerConnectivityRows();
@@ -1488,15 +1601,20 @@ function showServerConnectivityRows() {
             });
         }
     }
+=======
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 }
 
 // Function to show table rows for a specific location
 function showTableRowsForLocation(location) {
     console.log('Showing table rows for location:', location);
     
+<<<<<<< HEAD
     // Show all report sections when location is selected
     showAllReportSections();
     
+=======
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
     const sections = [
         { sectionType: 'network', tableId: 'internet-table' },
         { sectionType: 'server_connectivity', tableId: 'server-table' },
@@ -1521,9 +1639,12 @@ function showTableRowsForLocation(location) {
             }
         }
     });
+<<<<<<< HEAD
     
     // Also show static Server Connectivity rows when location is selected
     showServerConnectivityRows();
+=======
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 }
 
 // Function to clear dynamically added rows when location changes
@@ -2969,6 +3090,7 @@ function updateOthersStatus(selectElement, rowId) {
 }
 
 // BOD Data Management Functions
+<<<<<<< HEAD
 function toggleNameEdit() {
     const nameInput = document.getElementById('name');
     const editButton = document.querySelector('button[onclick="toggleNameEdit()"]');
@@ -2992,6 +3114,13 @@ function loadBodData() {
     
     // Load BOD names from new BOD_Name table (commented out since we now use current user name)
     // loadBodNames();
+=======
+function loadBodData() {
+    console.log('Loading BOD data...');
+    
+    // Load BOD names from new BOD_Name table
+    loadBodNames();
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 
     // Get current location
     const currentLocation = document.getElementById('location').value;
@@ -3210,6 +3339,14 @@ function updateNetworkTableWithReorderedItems(reorderedItems, primarySelected, s
             <td>
                 <input type="text" class="form-control" value="-" readonly>
             </td>
+<<<<<<< HEAD
+=======
+            <td>
+                <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this, 'internet')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         `;
         tbody.appendChild(newRow);
     });
@@ -3264,6 +3401,14 @@ function updateNetworkTableForUnit12(primarySelected) {
         <td>
             <input type="text" class="form-control" value="-" readonly>
         </td>
+<<<<<<< HEAD
+=======
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this, 'internet')">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
     `;
     tbody.appendChild(newRow);
     
@@ -3648,8 +3793,11 @@ function loadPrimaryInternetBodData(location) {
 }
 
 // BOD Name management functions
+<<<<<<< HEAD
 // Commented out - no longer needed since we use current user name
 /*
+=======
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 function addBodName() {
     const newValue = prompt('Enter new BOD name:');
     if (newValue && newValue.trim()) {
@@ -3680,10 +3828,14 @@ function addBodName() {
         });
     }
 }
+<<<<<<< HEAD
 */
 
 // Commented out - no longer needed since we use current user name
 /*
+=======
+
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 function deleteBodName() {
     const nameSelect = document.getElementById('name');
     const selectedValue = nameSelect.value;
@@ -3720,10 +3872,14 @@ function deleteBodName() {
         showAlert('Error deleting BOD name: ' + error.message, 'danger');
     });
 }
+<<<<<<< HEAD
 */
 
 // Commented out - no longer needed since we use current user name
 /*
+=======
+
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 function loadBodNames() {
     fetch('/it/api/bod-name')
         .then(response => response.json())
@@ -3744,7 +3900,10 @@ function loadBodNames() {
         })
         .catch(error => console.error('Error loading BOD names:', error));
 }
+<<<<<<< HEAD
 */
+=======
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
 
 function removeBodData(dataType) {
     let selectElement;
@@ -4006,6 +4165,14 @@ function addNetworkRow(leasedLine) {
         <td>
             <input type="text" class="form-control" value="-" readonly>
         </td>
+<<<<<<< HEAD
+=======
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this, 'internet')">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
     `;
     
     // Add the new row to the table
@@ -4329,7 +4496,15 @@ function updateNetworkTableForLocation(location) {
             <td>
                 <span class="checked-time">${item.checked_time}</span>
             </td>
+<<<<<<< HEAD
 
+=======
+            <td>
+                <button class="btn btn-danger btn-sm" onclick="deleteRow(this, 'network')" title="Delete Row">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         `;
     });
     
@@ -4413,7 +4588,15 @@ function loadNetworkRowsFromDatabase() {
                                 <td>
                                     <input type="text" class="form-control" value="${rowData.checked_time || '-'}" readonly>
                                 </td>
+<<<<<<< HEAD
 
+=======
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this, 'internet')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
                             `;
                             tbody.appendChild(newRow);
                         });
@@ -4624,12 +4807,15 @@ function deleteRow(button, sectionType) {
         const rowIndex = row.rowIndex - 1; // Get the row index (subtract 1 for header)
         const location = document.getElementById('location').value;
         
+<<<<<<< HEAD
         // Validate that a location is selected before allowing deletion
         if (!location || location === '') {
             showAlert('Please select a location before deleting rows.', 'warning');
             return;
         }
         
+=======
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
         // Get row data for permanent deletion
         const rowData = getRowDataForDeletion(row, sectionType);
         
@@ -5216,6 +5402,10 @@ function createNetworkRow() {
                    </td>
         <td><input type="text" class="form-control remarks-input" id="remarks-${rowCount}" placeholder="Enter remarks if needed"></td>
         <td><span id="checked-time-${rowCount}">-</span></td>
+<<<<<<< HEAD
+=======
+        ${isSuperAdmin ? '<td><button class="btn btn-sm btn-danger" onclick="deleteRow(this, \'network\')" title="Delete row"><i class="fas fa-trash"></i></button></td>' : ''}
+>>>>>>> 4a20dcca2e9a4be7c482ea6d8996e7c8e2ebf0bb
     `;
 }
 
