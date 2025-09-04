@@ -164,6 +164,25 @@ CREATE TABLE IF NOT EXISTS approvals (
     FOREIGN KEY (approver_id) REFERENCES users(id)
 );
 
+-- Approvers table (new)
+CREATE TABLE IF NOT EXISTS approvers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Admin-Approver Mappings table (new)
+CREATE TABLE IF NOT EXISTS admin_approver_mappings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_id INT NOT NULL,
+    approver_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (approver_id) REFERENCES approvers(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_admin_approver (admin_id, approver_id)
+);
+
 -- Insert default admin and user
 INSERT INTO users (email, password, name, role) VALUES
 ('admin@assetms.com', '$2b$12$w1Qw1Qw1Qw1Qw1Qw1Qw1QeQw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Q', 'Admin', 'admin'),

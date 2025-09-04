@@ -148,7 +148,7 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">Recent Maintenance Requests</h6>
-                    <a href="/maintenance" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('it.maintenance') }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-tools me-1"></i>View All
                     </a>
                 </div>
@@ -189,7 +189,7 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">Recent Asset Assignments</h6>
-                    <a href="/assign" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('it.assign') }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-user-plus me-1"></i>View All
                     </a>
                 </div>

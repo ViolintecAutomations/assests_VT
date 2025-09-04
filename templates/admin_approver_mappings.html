@@ -1,0 +1,652 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px 12px 0 0 !important;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+    }
+    
+    .approver-selection-container {
+        position: relative;
+    }
+    
+    .approver-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: #fff;
+    }
+    
+    .approver-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #f1f3f4;
+        transition: background-color 0.2s;
+    }
+    
+    .approver-item:last-child {
+        border-bottom: none;
+    }
+    
+    .approver-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .approver-item.selected {
+        background-color: #e3f2fd;
+        border-left: 3px solid #2196f3;
+    }
+    
+    .approver-info {
+        flex: 1;
+        cursor: pointer;
+    }
+    
+    .approver-name {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 2px;
+    }
+    
+    .approver-email {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .approver-delete-btn {
+        background: none;
+        border: none;
+        color: #dc3545;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        margin-left: 8px;
+    }
+    
+    .approver-delete-btn:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .approver-delete-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-people-fill text-primary me-2"></i>
+                        Admin-Approver Mappings
+                    </h1>
+                    <p class="text-muted">Manage admin to approver assignments for procurement workflow</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary fs-6 px-3 py-2">
+                        <i class="fas fa-user-shield me-1"></i>
+                        Super Admin
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create New Approver Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Create New Approver
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form id="approverForm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="approverName" class="form-label fw-bold">
+                                    <i class="fas fa-user me-1"></i>
+                                    Approver Name
+                                </label>
+                                <input type="text" class="form-control" id="approverName" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="approverEmail" class="form-label fw-bold">
+                                    <i class="fas fa-envelope me-1"></i>
+                                    Approver Email
+                                </label>
+                                <input type="email" class="form-control" id="approverEmail" required>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Create Approver
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Mapping Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Add New Mapping
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form id="mappingForm">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label for="adminSelect" class="form-label fw-bold">
+                                    <i class="fas fa-user-tie me-1"></i>
+                                    Select Admin
+                                </label>
+                                <select class="form-select" id="adminSelect" required>
+                                    <option value="">Choose Admin User...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-user-check me-1"></i>
+                                    Select Approver
+                                </label>
+                                <div class="approver-selection-container">
+                                    <select class="form-select" id="approverSelect" required>
+                                        <option value="">Choose Approver...</option>
+                                    </select>
+                                    <div class="approver-list mt-2" id="approverList">
+                                        <!-- Approver items with delete buttons will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Add Mapping
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Mappings Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list me-2"></i>
+                        Current Mappings
+                    </h6>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadMappings()">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Admin</th>
+                                    <th>Admin Email</th>
+                                    <th>Approver</th>
+                                    <th>Approver Email</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mappingsTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>
+                                        Loading mappings...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this admin-approver mapping?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentMappingId = null;
+
+// Load users by role
+async function loadUsersByRole(role, selectElement) {
+    try {
+        const response = await fetch(`/api/users?role=${role}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            selectElement.innerHTML = `<option value="">Choose ${role.charAt(0).toUpperCase() + role.slice(1)} User...</option>`;
+            data.users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = `${user.name} (${user.email})`;
+                selectElement.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+        showAlert('Error loading users', 'danger');
+    }
+}
+
+// Load approvers
+async function loadApprovers(selectElement) {
+    try {
+        const response = await fetch('/api/approver-list');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update dropdown
+            selectElement.innerHTML = `<option value="">Choose Approver...</option>`;
+            data.approvers.forEach(approver => {
+                const option = document.createElement('option');
+                option.value = approver.id;
+                option.textContent = `${approver.name} (${approver.email})`;
+                selectElement.appendChild(option);
+            });
+            
+            // Update approver list with delete buttons
+            loadApproverList(data.approvers);
+        } else {
+            console.error('API returned error:', data.error);
+            showAlert('Error loading approvers: ' + (data.error || 'Unknown error'), 'danger');
+        }
+    } catch (error) {
+        console.error('Error loading approvers:', error);
+        showAlert('Error loading approvers', 'danger');
+    }
+}
+
+// Load approver list with delete buttons
+function loadApproverList(approvers) {
+    const approverList = document.getElementById('approverList');
+    
+    if (approvers.length === 0) {
+        approverList.innerHTML = '<div class="text-center text-muted py-3">No approvers found</div>';
+        return;
+    }
+    
+    approverList.innerHTML = '';
+    approvers.forEach(approver => {
+        const approverItem = document.createElement('div');
+        approverItem.className = 'approver-item';
+        approverItem.innerHTML = `
+            <div class="approver-info" onclick="selectApprover(${approver.id}, '${approver.name}', '${approver.email}')">
+                <div class="approver-name">${approver.name}</div>
+                <div class="approver-email">${approver.email}</div>
+            </div>
+            <button class="approver-delete-btn" onclick="deleteApprover(${approver.id}, '${approver.name}')" title="Delete ${approver.name}">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        approverList.appendChild(approverItem);
+    });
+}
+
+// Select approver from list
+function selectApprover(id, name, email) {
+    const approverSelect = document.getElementById('approverSelect');
+    approverSelect.value = id;
+    
+    // Update visual selection
+    document.querySelectorAll('.approver-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Find and highlight the selected item
+    const selectedItem = document.querySelector(`.approver-info[onclick*="${id}"]`).parentElement;
+    selectedItem.classList.add('selected');
+}
+
+// Delete approver
+async function deleteApprover(approverId, approverName) {
+    if (!confirm(`Are you sure you want to delete approver "${approverName}"?\n\nThis will also remove all admin-approver mappings for this approver.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/approver-list/${approverId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert(`Approver "${approverName}" deleted successfully`, 'success');
+            
+            // Refresh both dropdown and list
+            await loadApprovers(document.getElementById('approverSelect'));
+            
+            // Also refresh mappings table
+            loadMappings();
+        } else {
+            showAlert(data.error || 'Error deleting approver', 'danger');
+        }
+    } catch (error) {
+        console.error('Error deleting approver:', error);
+        showAlert('Error deleting approver', 'danger');
+    }
+}
+
+// Create new approver
+async function createApprover(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('approverName').value.trim();
+    const email = document.getElementById('approverEmail').value.trim();
+    
+    // Enhanced frontend validation
+    if (!name) {
+        showAlert('Please enter the approver name', 'warning');
+        document.getElementById('approverName').focus();
+        return;
+    }
+    
+    if (!email) {
+        showAlert('Please enter the approver email', 'warning');
+        document.getElementById('approverEmail').focus();
+        return;
+    }
+    
+    // Email format validation
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(email)) {
+        showAlert('Please enter a valid email address', 'warning');
+        document.getElementById('approverEmail').focus();
+        return;
+    }
+    
+    // Name length validation
+    if (name.length < 2) {
+        showAlert('Approver name must be at least 2 characters long', 'warning');
+        document.getElementById('approverName').focus();
+        return;
+    }
+    
+    if (name.length > 100) {
+        showAlert('Approver name cannot exceed 100 characters', 'warning');
+        document.getElementById('approverName').focus();
+        return;
+    }
+    
+    // Disable the submit button to prevent double submission
+    const submitBtn = document.querySelector('#approverForm button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+    
+    try {
+        const response = await fetch('/api/approver-list', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert(data.message || 'Approver created successfully', 'success');
+            document.getElementById('approverForm').reset();
+            
+            // Refresh both dropdown and list to include the new approver
+            await loadApprovers(document.getElementById('approverSelect'));
+        } else {
+            showAlert(data.error || 'Error creating approver', 'danger');
+        }
+    } catch (error) {
+        console.error('Error creating approver:', error);
+        showAlert('Network error: Unable to create approver. Please try again.', 'danger');
+    } finally {
+        // Re-enable the submit button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Load all mappings
+async function loadMappings() {
+    const tbody = document.getElementById('mappingsTableBody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</td></tr>';
+    
+    try {
+        const response = await fetch('/api/admin-approver-mappings');
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.mappings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No mappings found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            data.mappings.forEach(mapping => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-tie text-primary me-2"></i>
+                            <span class="fw-bold">${mapping.admin_name}</span>
+                        </div>
+                    </td>
+                    <td><span class="text-muted">${mapping.admin_email}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-check text-success me-2"></i>
+                            <span class="fw-bold">${mapping.approver_name}</span>
+                        </div>
+                    </td>
+                    <td><span class="text-muted">${mapping.approver_email}</span></td>
+                    <td>
+                        <span class="badge bg-light text-dark">
+                            ${new Date(mapping.created_at).toLocaleDateString()}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteMapping(${mapping.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading mappings</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading mappings:', error);
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading mappings</td></tr>';
+    }
+}
+
+// Add new mapping
+async function addMapping(event) {
+    event.preventDefault();
+    
+    const adminId = document.getElementById('adminSelect').value;
+    const approverId = document.getElementById('approverSelect').value;
+    
+    if (!adminId || !approverId) {
+        showAlert('Please select both admin and approver', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/admin-approver-mappings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                admin_id: parseInt(adminId),
+                approver_id: parseInt(approverId)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('Mapping created successfully', 'success');
+            document.getElementById('mappingForm').reset();
+            loadMappings();
+        } else {
+            showAlert(data.error || 'Error creating mapping', 'danger');
+        }
+    } catch (error) {
+        console.error('Error creating mapping:', error);
+        showAlert('Error creating mapping', 'danger');
+    }
+}
+
+// Delete mapping
+function deleteMapping(mappingId) {
+    currentMappingId = mappingId;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Confirm delete
+async function confirmDelete() {
+    if (!currentMappingId) return;
+    
+    try {
+        const response = await fetch(`/api/admin-approver-mappings/${currentMappingId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('Mapping deleted successfully', 'success');
+            loadMappings();
+        } else {
+            showAlert(data.error || 'Error deleting mapping', 'danger');
+        }
+    } catch (error) {
+        console.error('Error deleting mapping:', error);
+        showAlert('Error deleting mapping', 'danger');
+    }
+    
+    // Close modal
+    const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+    deleteModal.hide();
+    currentMappingId = null;
+}
+
+// Show alert
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Load users for dropdowns
+    loadUsersByRole('admin', document.getElementById('adminSelect'));
+    loadApprovers(document.getElementById('approverSelect'));
+    
+    // Load current mappings
+    loadMappings();
+    
+    // Set up form submissions
+    document.getElementById('mappingForm').addEventListener('submit', addMapping);
+    document.getElementById('approverForm').addEventListener('submit', createApprover);
+    
+    // Set up delete confirmation
+    document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
+});
+</script>
+{% endblock %}

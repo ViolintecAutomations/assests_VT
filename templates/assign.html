@@ -45,6 +45,9 @@
                 <label for="asset_id" class="form-label">Asset</label>
                 <select id="asset_id" name="asset_id" class="form-select select2-asset" required>
                   <option value="">Search for an asset...</option>
+                  {% for value, label in form.asset_id.choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                  {% endfor %}
                 </select>
               </div>
               <div class="col-md-3 mb-2">
@@ -120,7 +123,7 @@
                     <span class="badge bg-success">Active</span>
                   </td>
                   <td>
-                    <form method="POST" action="{{ url_for('return_asset', assignment_id=assignment.id) }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('it.return_asset', assignment_id=assignment.id) }}" style="display: inline;">
                       <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Are you sure you want to return this asset?')">
                         <i class="fas fa-undo"></i> Return
                       </button>
@@ -142,7 +145,18 @@
 </div>
 
 <script>
-$(document).ready(function() {
+// Wait for jQuery to be available
+function waitForJQuery() {
+  if (typeof jQuery !== 'undefined') {
+    console.log('jQuery is available, initializing assign page');
+    initializeAssignPage();
+  } else {
+    console.log('jQuery not available yet, waiting...');
+    setTimeout(waitForJQuery, 100);
+  }
+}
+
+function initializeAssignPage() {
   console.log('Document ready - initializing assign page');
   
   // Initialize Select2 for Asset dropdown
@@ -171,81 +185,93 @@ $(document).ready(function() {
 
   // Asset Type Filter Functionality
   const assetTypeSelect = document.getElementById('asset_type_filter');
-  console.log('Asset type select element:', assetTypeSelect);
   
-  // Function to load assets
-  function loadAssets(assetType = 'all') {
-    console.log('loadAssets called with:', assetType);
+  // Store all asset options for client-side filtering
+  let allAssetOptions = [];
+  
+  // Function to filter assets by type
+  function filterAssetsByType(assetType = 'all') {
     const assetSelect = $('.select2-asset');
     
-    // Show loading state
+    // Clear current options
     assetSelect.empty();
-    assetSelect.append('<option value="">Loading assets...</option>');
-    assetSelect.trigger('change');
+    assetSelect.append('<option value="">Search for an asset...</option>');
     
-    // Fetch assets by type from API
-    const url = assetType && assetType !== 'all' ? `/api/assets/by_type/${encodeURIComponent(assetType)}` : '/api/assets/by_type/all';
-    console.log('Fetching from URL:', url);
-    
-    fetch(url)
-      .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-      })
-      .then(data => {
-        console.log('Received data:', data);
-        if (data.success) {
-          // Clear current options
-          assetSelect.empty();
-          
-          // Add placeholder option
-          assetSelect.append('<option value="">Search for an asset...</option>');
-          
-          // Add filtered assets
-          data.assets.forEach(function(asset) {
-            assetSelect.append(`<option value="${asset.id}">${asset.text}</option>`);
-          });
-          
-          console.log(`Added ${data.assets.length} assets to dropdown`);
-          
-          // Trigger change to update Select2
-          assetSelect.trigger('change');
-        } else {
-          console.error('Error fetching assets:', data.error);
-          assetSelect.empty();
-          assetSelect.append('<option value="">Error loading assets</option>');
-          assetSelect.trigger('change');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        assetSelect.empty();
-        assetSelect.append('<option value="">Error loading assets</option>');
-        assetSelect.trigger('change');
+    if (assetType === 'all' || assetType === '' || assetType === 'All Types') {
+      // Show all assets
+      allAssetOptions.forEach(function(asset) {
+        assetSelect.append(`<option value="${asset.id}">${asset.text}</option>`);
       });
+      console.log(`Showing all ${allAssetOptions.length} assets`);
+    } else {
+      // Filter assets by type
+      const filteredAssets = allAssetOptions.filter(function(asset) {
+        if (!asset.assetType) return false;
+        return asset.assetType.toLowerCase() === assetType.toLowerCase();
+      });
+      
+      filteredAssets.forEach(function(asset) {
+        assetSelect.append(`<option value="${asset.id}">${asset.text}</option>`);
+      });
+      console.log(`Filtered to ${filteredAssets.length} ${assetType} assets`);
+    }
+    
+    // Trigger change to update Select2
+    assetSelect.trigger('change');
   }
   
-  if (assetTypeSelect) {
-    console.log('Asset type select found, setting up event listener');
-    // Load all assets initially after a short delay to ensure page is ready
-    setTimeout(() => {
-      console.log('Loading initial assets...');
-      loadAssets('all');
-    }, 100);
-    
-    assetTypeSelect.addEventListener('change', function() {
-      const type = this.value;
-      console.log('Asset type changed to:', type);
+  // Initialize asset filtering after Select2 is ready
+  function initializeAssetFiltering() {
+    console.log('initializeAssetFiltering called');
+    if (assetTypeSelect) {
+      console.log('Asset type select found, initializing asset filtering...');
       
-      // Clear current selection
-      $('.select2-asset').val(null).trigger('change');
+      // Store all asset options from the initial dropdown
+      console.log('Reading asset options from dropdown...');
+      $('.select2-asset option').each(function() {
+        if ($(this).val()) { // Skip the placeholder option
+          const optionText = $(this).text();
+          const optionValue = $(this).val();
+          
+          // Extract asset type from the option text (format: "serial (type, brand) - details")
+          const match = optionText.match(/\(([^,]+),\s*([^)]+)\)/);
+          let assetType = '';
+          if (match) {
+            assetType = match[1].trim();
+            console.log(`Extracted type: "${assetType}" from: "${optionText}"`);
+          } else {
+            console.log(`Could not extract type from: "${optionText}"`);
+          }
+          
+          allAssetOptions.push({
+            id: optionValue,
+            text: optionText,
+            assetType: assetType
+          });
+        }
+      });
       
-      // Load assets for selected type
-      loadAssets(type);
-    });
-  } else {
-    console.error('Asset type select element not found!');
+      console.log(`Stored ${allAssetOptions.length} asset options`);
+      
+      // Show all assets initially
+      filterAssetsByType('all');
+      
+      assetTypeSelect.addEventListener('change', function() {
+        const type = this.value;
+        console.log(`Asset type changed to: ${type}`);
+        console.log(`Current allAssetOptions count: ${allAssetOptions.length}`);
+        
+        // Clear current selection
+        $('.select2-asset').val(null).trigger('change');
+        
+        // Filter assets for selected type
+        filterAssetsByType(type);
+      });
+    }
   }
+  
+  // Initialize after a short delay to ensure Select2 is ready
+  setTimeout(initializeAssetFiltering, 500);
 
   // Assignment History Search and Filter Functionality
   const searchInput = document.getElementById('assignmentSearch');
@@ -295,6 +321,9 @@ $(document).ready(function() {
   if (typeFilter) {
     typeFilter.addEventListener('change', filterAssignments);
   }
-});
+}
+
+// Start the jQuery waiting process
+waitForJQuery();
 </script>
 {% endblock %}

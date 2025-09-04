@@ -211,7 +211,7 @@
       </div>
       <div class="col-md-6">
         <div class="d-flex justify-content-end align-items-center gap-2">
-          <a href="/procurement/create-pr" class="btn btn-primary">
+          <a href="{{ url_for('it.create_pr') }}" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> New PR
           </a>
           <button class="btn btn-outline-warning" onclick="forceRefresh()" title="Force Refresh">
@@ -330,6 +330,25 @@ function loadApprovals() {
         console.log(`Processing ${items.length} approvals`); // Debug log
       }
       
+      // Show cleanup notification if cleanup was performed
+      if (data.cleanup_info && (data.cleanup_info.deleted_pending_approvals > 0 || data.cleanup_info.deleted_pending_items > 0 || data.cleanup_info.deleted_pending_approvals_table > 0)) {
+        let cleanupMessage = `Cleanup performed: `;
+        let parts = [];
+        
+        if (data.cleanup_info.deleted_pending_approvals > 0) {
+          parts.push(`${data.cleanup_info.deleted_pending_approvals} pending item approvals`);
+        }
+        if (data.cleanup_info.deleted_pending_items > 0) {
+          parts.push(`${data.cleanup_info.deleted_pending_items} pending items`);
+        }
+        if (data.cleanup_info.deleted_pending_approvals_table > 0) {
+          parts.push(`${data.cleanup_info.deleted_pending_approvals_table} pending approvals`);
+        }
+        
+        cleanupMessage += parts.join(', ') + ' removed for PRs with approved items.';
+        showSuccessMessage(cleanupMessage);
+      }
+      
       if (items.length > 0) {
         items.forEach((row, index) => {
           console.log(`Processing Item ${index + 1}:`, row); // Debug log
@@ -362,7 +381,14 @@ function loadApprovals() {
           const approvalDateCell = `<span class="text-muted small">${approvalDate}</span>`;
           
           // Format amount with better styling
-          const amount = isApprovedItems ? (row.total_amount || '0') : (row.total_amount || '0');
+          let amount = '0';
+          if (isApprovedItems) {
+            // For approved items, show PR total amount if available
+            amount = row.pr_total_amount || row.total_amount || '0';
+          } else {
+            // For all approvals, also show PR total amount if available
+            amount = row.pr_total_amount || row.total_amount || '0';
+          }
           const amountCell = `<span class="fw-bold text-success">₹${amount}</span>`;
           
           // Format configuration with truncation
@@ -413,7 +439,7 @@ function loadApprovals() {
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>
-              <a href="/pr_details/${row.pr_id}" class="text-primary fw-bold text-decoration-none pr-number-link" 
+              <a href="{{ url_for('it.pr_details', pr_id='${row.pr_id}') }}" class="text-primary fw-bold text-decoration-none pr-number-link" 
                  title="Click to view PR details">
                 ${row.pr_number || ''}
               </a>

@@ -19,11 +19,11 @@
                     <h6 class="m-0 font-weight-bold text-primary">PR: {{ pr.pr_number }}</h6>
                     <div>
                         {% if pr.status == 'pending' %}
-                        <a href="/super-admin/approve-pr/{{ pr.id }}" class="btn btn-success btn-sm">
+                        <a href="{{ url_for('it.super_admin_approve_pr', pr_id=pr.id) }}" class="btn btn-success btn-sm">
                             <i class="fas fa-check"></i> Approve PR
                         </a>
                         {% endif %}
-                        <a href="/super-admin/pr-requests" class="btn btn-secondary btn-sm">
+                        <a href="{{ url_for('it.super_admin_pr_requests') }}" class="btn btn-secondary btn-sm">
                             <i class="fas fa-arrow-left"></i> Back to List
                         </a>
                     </div>
@@ -46,14 +46,7 @@
                                                     <td><strong><i class="bi bi-hash"></i> PR Number:</strong></td>
                                                     <td><span class="badge bg-primary fs-6">{{ pr.pr_number }}</span></td>
                                                 </tr>
-                                                <tr>
-                                                    <td><strong><i class="bi bi-flag"></i> Status:</strong></td>
-                                                    <td>
-                                                        <span class="badge badge-{{ 'warning' if pr.status == 'pending' else 'success' if pr.status == 'approved' else 'secondary' }} fs-6">
-                                                            {{ pr.status.title() }}
-                                                        </span>
-                                                    </td>
-                                                </tr>
+
                                                 <tr>
                                                     <td><strong><i class="bi bi-person"></i> Requester:</strong></td>
                                                     <td>{{ pr.requester_name or 'N/A' }}</td>
@@ -81,7 +74,7 @@
                                             </table>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="card bg-light">
+                                            <div class="card bg-light mb-3">
                                                 <div class="card-body">
                                                     <h6 class="card-title text-primary">
                                                         <i class="bi bi-people"></i> For
@@ -90,31 +83,37 @@
                                                 </div>
                                             </div>
                                             
+                                            <!-- Reason for Not Using Stock -->
+                                            <div class="card bg-warning">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-dark">
+                                                        <i class="bi bi-exclamation-triangle"></i> Reason for Not Using Stock
+                                                    </h6>
+                                                    <div class="mt-2">
+                                                        {% if pr_items %}
+                                                            {% set has_content = false %}
+                                                            {% for item in pr_items %}
+                                                                {% if item.reason_not_using_stock and item.reason_not_using_stock != 'N/A' and item.reason_not_using_stock != '' and item.reason_not_using_stock != None and item.reason_not_using_stock != 'None' %}
+                                                                    {% set has_content = true %}
+                                                                    <div class="mb-2">
+                                                                        <strong>{{ item.asset_type_name or 'Item' }} {{ loop.index }}:</strong>
+                                                                        <small class="text-dark">{{ item.reason_not_using_stock }}</small>
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            {% if not has_content %}
+                                                                <small class="text-muted">No stock reasons found</small>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <small class="text-muted">No items found</small>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
                                             <!-- Summary Statistics -->
                                             {% if pr_items %}
-                                            <div class="mt-3">
-                                                <h6 class="text-primary">
-                                                    <i class="bi bi-calculator"></i> Summary
-                                                </h6>
-                                                <ul class="list-unstyled">
-                                                    <li class="mb-2">
-                                                        <i class="bi bi-circle-fill text-primary me-2"></i>
-                                                        <strong>Total Items:</strong> {{ pr_items|length }}
-                                                    </li>
-                                                    <li class="mb-2">
-                                                        <i class="bi bi-circle-fill text-success me-2"></i>
-                                                        <strong>Total Quantity:</strong> {{ pr_items|sum(attribute='quantity_required') or 0 }}
-                                                    </li>
-                                                    <li class="mb-2">
-                                                        <i class="bi bi-circle-fill text-warning me-2"></i>
-                                                        <strong>To Procure:</strong> {{ pr_items|sum(attribute='quantity_to_procure') or 0 }}
-                                                    </li>
-                                                    <li class="mb-2">
-                                                        <i class="bi bi-circle-fill text-danger me-2"></i>
-                                                        <strong>Total Amount:</strong> ₹{{ "%.2f"|format(pr_items|sum(attribute='total_amount') or 0) }}
-                                                    </li>
-                                                </ul>
-                                            </div>
+
                                             {% endif %}
                                         </div>
                                     </div>
@@ -151,6 +150,7 @@
                                             <th width="8%">System Recommended</th>
                                             <th width="8%">Recommended</th>
                                             <th width="10%">Reason</th>
+                                            <th width="12%">Reason for Not Using Stock</th>
                                             <th width="10%">Approval Justification</th>
                                         </tr>
                                     </thead>
@@ -159,7 +159,8 @@
                                         <tr>
                                             <td>
                                                 {% if pr.status == 'pending' %}
-                                                <input type="checkbox" name="approve_item_{{ item.id }}" class="form-check-input item-checkbox" value="{{ item.id }}">
+                                                <input type="checkbox" name="approve_item_{{ item.id }}" class="form-check-input item-checkbox" value="{{ item.id }}"
+                                                       {% if item.favor == 'Yes' %}checked{% endif %}>
                                                 {% else %}
                                                 <i class="fas fa-check text-success"></i>
                                                 {% endif %}
@@ -178,24 +179,27 @@
                                             <td class="text-right">₹{{ "%.2f"|format(item.total_amount or 0) }}</td>
                                             <td class="text-center">
                                                 {% if item.favor == 'Yes' %}
-                                                <span class="badge badge-success">Yes</span>
+                                                <span class="badge bg-success text-dark">Yes</span>
                                                 {% elif item.favor == 'No' %}
-                                                <span class="badge badge-danger">No</span>
+                                                <span class="badge bg-danger text-dark">No</span>
                                                 {% else %}
-                                                <span class="badge badge-secondary">N/A</span>
+                                                <span class="badge bg-secondary text-dark">N/A</span>
                                                 {% endif %}
                                             </td>
                                             <td class="text-center">
                                                 {% if item.favor == 'Yes' %}
-                                                <span class="badge badge-success">Yes</span>
+                                                <span class="badge bg-success text-dark">Yes</span>
                                                 {% elif item.favor == 'No' %}
-                                                <span class="badge badge-danger">No</span>
+                                                <span class="badge bg-danger text-dark">No</span>
                                                 {% else %}
-                                                <span class="badge badge-secondary">N/A</span>
+                                                <span class="badge bg-secondary text-dark">N/A</span>
                                                 {% endif %}
                                             </td>
                                             <td>
                                                 <small>{{ item.favor_reason or 'N/A' }}</small>
+                                            </td>
+                                            <td>
+                                                <small>{% if item.reason_not_using_stock and item.reason_not_using_stock != 'None' %}{{ item.reason_not_using_stock }}{% else %}N/A{% endif %}</small>
                                             </td>
                                             <td>
                                                 {% if pr.status == 'pending' %}
@@ -227,6 +231,98 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    <!-- Approved Items Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-check-circle"></i> Approved Items
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% set approved_items = pr_items|selectattr('is_approved', 'equalto', 1)|list %}
+                                    {% if approved_items %}
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped">
+                                            <thead class="thead-dark">
+                                                <tr>
+                                                    <th width="3%">#</th>
+                                                    <th width="12%">Asset Type</th>
+                                                    <th width="10%">Brand</th>
+                                                    <th width="12%">Vendor</th>
+                                                    <th width="15%">Configuration</th>
+                                                    <th width="10%">Quantity Required</th>
+                                                    <th width="10%">Stock Available</th>
+                                                    <th width="10%">Quantity to Procure</th>
+                                                    <th width="10%">Unit Cost</th>
+                                                    <th width="10%">Total Amount</th>
+                                                    <th width="10%">Approval Date</th>
+                                                    <th width="15%">Approval Justification</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in approved_items %}
+                                                <tr class="table-success">
+                                                    <td>{{ loop.index }}</td>
+                                                    <td>{{ item.asset_type_name or 'N/A' }}</td>
+                                                    <td>{{ item.brand or 'N/A' }}</td>
+                                                    <td>{{ item.vendor or 'N/A' }}</td>
+                                                    <td>
+                                                        <small>{{ item.configuration or 'N/A' }}</small>
+                                                    </td>
+                                                    <td class="text-center">{{ item.quantity_required or 0 }}</td>
+                                                    <td class="text-center">{{ item.stock_available or 0 }}</td>
+                                                    <td class="text-center">{{ item.quantity_to_procure or 0 }}</td>
+                                                    <td class="text-right">₹{{ "%.2f"|format(item.unit_cost or 0) }}</td>
+                                                    <td class="text-right">₹{{ "%.2f"|format(item.total_amount or 0) }}</td>
+                                                    <td class="text-center">
+                                                        <small>{{ item.approved_at.strftime('%Y-%m-%d %H:%M') if item.approved_at else 'N/A' }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <small>{{ item.approval_justification or 'No justification provided' }}</small>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <!-- Approved Items Summary -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="card bg-success text-white">
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-check-circle"></i> Total Approved Items
+                                                    </h6>
+                                                    <h3 class="mb-0">{{ approved_items|length }}</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-info text-white">
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-rupee-sign"></i> Total Approved Amount
+                                                    </h6>
+                                                    <h3 class="mb-0">₹{{ "%.2f"|format(approved_items|sum(attribute='total_amount') or 0) }}</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">No approved items found.</p>
+                                        <small class="text-muted">Items will appear here once they are approved.</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -247,9 +343,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Update select all when individual checkboxes change
+    // Single selection functionality - only one checkbox can be selected at a time
     itemCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Uncheck all other checkboxes
+                itemCheckboxes.forEach(otherCheckbox => {
+                    if (otherCheckbox !== this) {
+                        otherCheckbox.checked = false;
+                    }
+                });
+            }
+            
+            // Update select all checkbox state
             const allChecked = Array.from(itemCheckboxes).every(cb => cb.checked);
             const anyChecked = Array.from(itemCheckboxes).some(cb => cb.checked);
             
@@ -318,7 +424,12 @@ function submitApproval(items, status) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Items processed successfully!');
+            if (status === 'approved') {
+                alert('Items approved successfully! Unapproved items have been permanently deleted.');
+            } else {
+                alert('Items rejected successfully!');
+            }
+            // Reload the page to show the updated state
             location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -329,5 +440,7 @@ function submitApproval(items, status) {
         alert('An error occurred while processing the request.');
     });
 }
+
+
 </script>
 {% endblock %}

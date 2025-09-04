@@ -1,54 +1,228 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>User Management</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>User Management</h2>
+  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+    <i class="bi bi-plus-circle me-2"></i>Add New User
+  </button>
+</div>
+
 <div class="row">
-  <div class="col-md-5">
-    <div class="card mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-people me-2"></i>User List</h5>
+      </div>
       <div class="card-body">
-        <h5>Add New User</h5>
-        <form method="POST">
-          {{ form.hidden_tag() }}
-          <div class="mb-3">{{ form.name.label(class="form-label") }}{{ form.name(class="form-control") }}</div>
-          <div class="mb-3">{{ form.email.label(class="form-label") }}{{ form.email(class="form-control") }}</div>
-          <div class="mb-3">{{ form.password.label(class="form-label") }}{{ form.password(class="form-control") }}</div>
-          <div class="mb-3">{{ form.role.label(class="form-label") }}{{ form.role(class="form-select") }}</div>
-          {{ form.submit(class="btn btn-primary") }}
-        </form>
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+              <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span class="badge bg-{{ 'primary' if user.role == 'admin' else 'success' if user.role == 'super_admin' else 'info' if user.role == 'it_team' else 'secondary' }}">
+                    {{ user.role.replace('_', ' ').title() }}
+                  </span>
+                </td>
+                <td>
+                  <a href="{{ url_for('it.edit_user', user_id=user.id) }}" class="btn btn-sm btn-warning">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                  </a>
+                  <form method="POST" action="{{ url_for('it.delete_user', user_id=user.id) }}" style="display:inline-block" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-danger">
+                      <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  <i class="bi bi-people fs-1 d-block mb-2"></i>
+                  No users found.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-  <div class="col-md-7">
-    <h5>User List</h5>
-    <table class="table table-bordered table-striped">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for user in users %}
-        <tr>
-          <td>{{ user.id }}</td>
-          <td>{{ user.name }}</td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.role }}</td>
-          <td>
-            <a href="/users/edit/{{ user.id }}" class="btn btn-sm btn-warning">Edit</a>
-            <form method="POST" action="/users/delete/{{ user.id }}" style="display:inline-block" onsubmit="return confirm('Delete this user?');">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="5" class="text-center">No users found.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addUserModalLabel">
+          <i class="bi bi-person-plus me-2"></i>Add New User
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" id="addUserForm" action="{{ url_for('it.users') }}">
+        <div class="modal-body">
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            <label for="{{ form.name.id }}" class="form-label">
+              <i class="bi bi-person me-1"></i>{{ form.name.label.text }}
+            </label>
+            {{ form.name(class="form-control", placeholder="Enter full name") }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.email.id }}" class="form-label">
+              <i class="bi bi-envelope me-1"></i>{{ form.email.label.text }}
+            </label>
+            {{ form.email(class="form-control", placeholder="Enter email address") }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.password.id }}" class="form-label">
+              <i class="bi bi-lock me-1"></i>{{ form.password.label.text }}
+            </label>
+            {{ form.password(class="form-control", placeholder="Enter password") }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.role.id }}" class="form-label">
+              <i class="bi bi-shield me-1"></i>{{ form.role.label.text }}
+            </label>
+            {{ form.role(class="form-select", id="userRole") }}
+          </div>
+          
+          <!-- Admin Menu Permissions Section -->
+          <div id="adminMenuPermissions" class="mb-3" style="display: none;">
+            <label class="form-label">
+              <i class="bi bi-list-check me-1"></i>Admin Menu Permissions
+            </label>
+            <div class="border rounded p-3 bg-light">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="menu_dashboard" id="menu_dashboard">
+                    <label class="form-check-label" for="menu_dashboard">
+                      <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="menu_procurement" id="menu_procurement">
+                    <label class="form-check-label" for="menu_procurement">
+                      <i class="fas fa-shopping-cart me-1"></i>Procurement
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="menu_asset_master" id="menu_asset_master">
+                    <label class="form-check-label" for="menu_asset_master">
+                      <i class="fas fa-box me-1"></i>Asset Master
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="menu_assign_asset" id="menu_assign_asset">
+                    <label class="form-check-label" for="menu_assign_asset">
+                      <i class="fas fa-exchange-alt me-1"></i>Assign Asset
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="menu_requests" id="menu_requests">
+                    <label class="form-check-label" for="menu_requests">
+                      <i class="fas fa-list me-1"></i>Requests
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="menu_user_management" id="menu_user_management">
+                    <label class="form-check-label" for="menu_user_management">
+                      <i class="fas fa-users me-1"></i>User Management
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="menu_bod_report" id="menu_bod_report">
+                    <label class="form-check-label" for="menu_bod_report">
+                      <i class="fas fa-clipboard-check me-1"></i>BOD Report
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="menu_daily_infrastructure" id="menu_daily_infrastructure">
+                    <label class="form-check-label" for="menu_daily_infrastructure">
+                      <i class="fas fa-calendar-check me-1"></i>Daily Infrastructure Status
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>Add User
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const userRoleSelect = document.getElementById('userRole');
+  const adminMenuPermissions = document.getElementById('adminMenuPermissions');
+  
+  // Show/hide admin menu permissions based on role selection
+  if (userRoleSelect) {
+    userRoleSelect.addEventListener('change', function() {
+      if (this.value === 'admin') {
+        adminMenuPermissions.style.display = 'block';
+      } else {
+        adminMenuPermissions.style.display = 'none';
+        // Uncheck all checkboxes when role is not admin
+        const checkboxes = adminMenuPermissions.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+      }
+    });
+  }
+  
+  // Handle form submission
+  const addUserForm = document.getElementById('addUserForm');
+  if (addUserForm) {
+    addUserForm.addEventListener('submit', function(e) {
+      // Show loading state
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Adding...';
+      submitBtn.disabled = true;
+      
+      // Let the form submit normally - the backend will handle it
+      // The loading state will be cleared when the page reloads
+    });
+  }
+  
+  // Clear form when modal is closed
+  const addUserModal = document.getElementById('addUserModal');
+  if (addUserModal) {
+    addUserModal.addEventListener('hidden.bs.modal', function() {
+      const form = this.querySelector('form');
+      if (form) {
+        form.reset();
+        adminMenuPermissions.style.display = 'none';
+      }
+    });
+  }
+});
+</script>
 {% endblock %} 

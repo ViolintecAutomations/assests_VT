@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>Asset Report</h2>
-<a href="{{ url_for('export_report') }}" class="btn btn-success mb-3">Download Asset CSV</a>
-<a href="{{ url_for('export_requests_report') }}" class="btn btn-primary mb-3 ms-2">Download Requests CSV</a>
-<a href="{{ url_for('export_maintenance_report') }}" class="btn btn-info mb-3 ms-2">Download Maintenance CSV</a>
+<a href="{{ url_for('it.export_report') }}" class="btn btn-success mb-3">Download Asset CSV</a>
+<a href="{{ url_for('it.export_requests_report') }}" class="btn btn-primary mb-3 ms-2">Download Requests CSV</a>
+<a href="{{ url_for('it.export_maintenance_report') }}" class="btn btn-info mb-3 ms-2">Download Maintenance CSV</a>
 <div class="table-responsive mt-4">
   <table class="table table-bordered table-striped">
     <thead class="table-dark">

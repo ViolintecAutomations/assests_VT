@@ -106,7 +106,7 @@
                                     <button type="submit" class="btn btn-success btn-lg">
                                         <i class="fas fa-check"></i> Approve Purchase Request
                                     </button>
-                                    <a href="/super-admin/pr-details/{{ pr.id }}" class="btn btn-secondary btn-lg ml-2">
+                                    <a href="{{ url_for('it.super_admin_pr_details', pr_id=pr.id) }}" class="btn btn-secondary btn-lg ml-2">
                                         <i class="fas fa-times"></i> Cancel
                                     </a>
                                 </div>
@@ -119,4 +119,9 @@
     </div>
 </div>
 {% endblock %}
+
+
+
+
+
 

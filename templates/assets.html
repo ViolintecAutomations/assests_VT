@@ -311,10 +311,10 @@
           <td>{{ asset.warranty_expiry or '-' }}</td>
           <td>
             <div class="d-flex flex-column gap-1">
-              <a href="/assets/edit/{{ asset.id }}" class="btn btn-sm btn-warning" title="Edit Asset">
+              <a href="{{ url_for('it.edit_asset', asset_id=asset.id) }}" class="btn btn-sm btn-warning" title="Edit Asset">
                 <i class="bi bi-pencil"></i>
               </a>
-              <form method="POST" action="/assets/delete/{{ asset.id }}" style="display:inline-block" onsubmit="return confirm('Delete this asset?');">
+              <form method="POST" action="{{ url_for('it.delete_asset', asset_id=asset.id) }}" style="display:inline-block" onsubmit="return confirm('Delete this asset?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-danger" title="Delete Asset">
                   <i class="bi bi-trash"></i>
@@ -456,10 +456,10 @@ document.addEventListener('DOMContentLoaded', function() {
             li.className = 'd-flex justify-content-between align-items-center px-2';
             li.style.cursor = 'pointer';
             var span = document.createElement('span');
-            span.textContent = brand;
+            span.textContent = brand.name;
             span.onclick = function() {
-              document.getElementById('selectedBrandText').textContent = brand;
-              document.getElementById('brandHiddenInput').value = brand;
+              document.getElementById('selectedBrandText').textContent = brand.name;
+              document.getElementById('brandHiddenInput').value = brand.name;
               menu.style.display = 'none';
             };
             li.appendChild(span);
